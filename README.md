@@ -2,6 +2,8 @@
 
 **注意：github源码中不包含数据库文件，`pip`包中包含数据库文件**
 
+`pip`安装命令：`pip install NextBFootBallAnalysis`
+
 ## 一、数据
 
 |联赛|数据录入|开始赛季|数据更新时间|

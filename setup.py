@@ -51,7 +51,7 @@ do_setup(
         "console_scripts": [
             "nextb-football-init-db = NextBFootBallAnalysis.cli.cli_init_football_db:run",
             "nextb-football-update-db = NextBFootBallAnalysis.cli.cli_update_football_db:run",
-            "nextb-football-get-report = NextBFootBallAnalysis.cli.cli_get_report:run",
+            "nextb-football-get-team-report = NextBFootBallAnalysis.cli.cli_get_team_report:run",
             "nextb-football-get-match-report = NextBFootBallAnalysis.cli.cli_get_match_report:run",
         ],
     },

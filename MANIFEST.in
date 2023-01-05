@@ -1,0 +1,4 @@
+graft NextBFootBallAnalysis/libs
+
+global-exclude __pycache__
+global-exclude *.py[co]

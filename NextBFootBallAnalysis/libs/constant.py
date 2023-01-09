@@ -12,17 +12,19 @@ MAX_MATCHS_NUMBER = 38 * 100
 TEAM_REPORT = """球队名称：{team}
 
 统计类型: {statics_type_str}
+近{number}场比赛进球场次及占比：{match_goals_ratio}
+近{home_number}场比赛主场进球场次及占比：{home_match_goals_rartio}
+近{away_number}场比赛客场进球场次及占比：{away_match_goals_ratio}
 历史比赛场次：{total}
 历史进球场次及占比：{goals_total_ratio}
 主场进球场次及占比：{home_goals_total_ratio}
 客场进球场次及占比：{away_goals_total_ratio}
-近{number}场比赛进球场次及占比：{match_goals_ratio}
-近{home_number}场比赛主场进球场次及占比：{home_match_goals_rartio}
-近{away_number}场比赛客场进球场次及占比：{away_match_goals_ratio}
+历史进球场次间隔: {goals_dist}
 近{xnumber}个赛季场次: {season_total}
 近{xnumber}个赛季进球场次及占比：{season_goals_ratio}
 近{xnumber}个赛季主场进球场次及占比：{home_season_goals_ratio}
 近{xnumber}个赛季客场进球场次及占比：{away_season_goals_ratio}
+近{xnumber}个赛季进球场次间隔: {xnumber_goals_dist}
 """
 
 MATCH_REPORT = """交战双方: {home_team} vs {away_team}

@@ -8,6 +8,8 @@
 
 import os
 import datetime
+from collections import Counter
+from statistics import mean, median
 from dateutil.relativedelta import relativedelta
 from NextBFootBallAnalysis.libs.sqlite_db import NextbFootballSqliteDB
 from NextBFootBallAnalysis.libs.constant import (
@@ -78,8 +80,49 @@ def format_ratio(data, ratio_key):
     format_list = list()
     for key, value in ratio_data.items():
         ratio = "%.2f" % (value / total)
-        format_list.append("{}:{}".format(str(key), str(ratio)))
+        format_list.append("{}-{}".format(str(key), str(ratio)))
     format_list.sort()
+    return ", ".join(format_list)
+
+def format_list(data, ratio_key):
+    """
+    ratio_key: value的名称
+    目前仅用于格式化进球场次统计
+    """
+    ratio_data = data.get(ratio_key)
+    format_list = list()
+    # total_len = [len(t) for t in ratio_data.values()]
+    # total = sum(total_len)
+    for key, value in ratio_data.items():
+        if key not in [0, 1, 2, 3]:
+            continue
+        value_new = sorted(value)
+        # 统计进球场次最大间隔
+        max_dist = max(value_new)
+        # 统计进球场次最小间隔
+        min_dist = min(value_new)
+        # 统计进球场次平均间隔
+        mean_dist = "%.2f" % mean(value_new)
+        # 统计进球场次中位数间隔
+        median_dist = median(value_new)
+        # 统计每个进球场次间隔的占比
+        counter_str_list = list()
+        counter = Counter(value)
+        total = sum(counter.values())
+        index = 0
+        for a, b in counter.most_common():
+            b1 = "%.2f" % (b / total)
+            counter_str_list.append("{}-{}".format(str(a), str(b1)))
+            index += 1
+            # 只看top5的
+            if index >= 5:
+                break
+        format_list.append("\n\t{}场最大间隔:{}".format(str(key), max_dist))
+        format_list.append("\n\t{}场最小间隔:{}".format(str(key), min_dist))
+        format_list.append("\n\t{}场平均间隔:{}".format(str(key), mean_dist))
+        format_list.append("\n\t{}场中位数:{}".format(str(key), median_dist))
+        format_list.append("\n\t{}场出现场次及占比:{}".format(str(key), ",".join(counter_str_list)))
+    # format_list.sort()
     return ", ".join(format_list)
 
 
@@ -209,33 +252,43 @@ def parse_team(matchs, statics_type, **param):
     ratio_key: 总的分布比例字段名称
     home_ratio_key: 主场分布比例字段名称
     away_ratio_key: 客场分布比例字段名称
+    goals_dist: 进球场次间隔
     """
     team = param.get("team")
     total = param.get("total_key")
     ratio_key = param.get("ratio_key")
     home_ratio_key = param.get("home_ratio_key")
     away_ratio_key = param.get("away_ratio_key")
+    goals_dist = param.get("goals_dist")
     data = {
         total: len(matchs),
         ratio_key: dict(),
         home_ratio_key: dict(),
         away_ratio_key: dict(),
+        goals_dist: dict()
     }
+    # 用于动态记录场次间隔变化
+    goals_dist_tmp = dict()
     for match in matchs:
         if 1 == statics_type:
             tg = match.ftg
-            score = "{}-{}".format(match.fthg, match.ftag)
         else:
             tg = match.htg
-            score = "{}-{}".format(match.hthg, match.htag)
         # 进球数统计
         if tg not in data[ratio_key].keys():
             data[ratio_key][tg] = 0
         data[ratio_key][tg] += 1
-        # 比分统计
-        if score not in data[ratio_key].keys():
-            data[ratio_key][tg] = 0
-        data[ratio_key][tg] += 1
+        # 统计进球间隔场次
+        if tg != -1:
+            if tg in goals_dist_tmp.keys():
+                if tg not in data[goals_dist].keys():
+                    data[goals_dist][tg]= list()
+                data[goals_dist][tg].append(goals_dist_tmp[tg])
+            # 老的进球场数间隔+1场
+            for a in goals_dist_tmp.keys():
+                goals_dist_tmp[a] += 1
+            # 新的进球场数间隔清0
+            goals_dist_tmp[tg] = 0
         # 主场统计统计
         if team == match.home_team:
             if tg not in data[home_ratio_key].keys():
@@ -272,6 +325,7 @@ def get_report(param):
         ratio_key="goals_total_ratio",
         home_ratio_key="home_goals_total_ratio",
         away_ratio_key="away_goals_total_ratio",
+        goals_dist="goals_dist",
     )
     # 查询最近number场比赛
     n_match = nfs.get_team_last_matchs(team=team, number=number)
@@ -283,6 +337,7 @@ def get_report(param):
         ratio_key="match_goals_ratio",
         home_ratio_key="home_match_goals_rartio",
         away_ratio_key="away_match_goals_ratio",
+        goals_dist="goals_dist",
     )
     # 查询最近xnumber个赛季比赛
     x_match = nfs.get_team_last_season_matchs(team=team, number=xnumber)
@@ -294,12 +349,14 @@ def get_report(param):
         ratio_key="season_goals_ratio",
         home_ratio_key="home_season_goals_ratio",
         away_ratio_key="away_season_goals_ratio",
+        goals_dist="goals_dist",
     )
     nfs.close_session()
     nfs.close()
     home_number = sum(n_matchs_data.get("home_match_goals_rartio").values())
     away_number = sum(n_matchs_data.get("away_match_goals_ratio").values())
-    season_total = sum(x_matchs_data.get("season_goals_ratio").values())
+    # season_total = sum(x_matchs_data.get("season_goals_ratio").values())
+    season_total = x_matchs_data.get("xnumber")
     report = TEAM_REPORT.format(
         team=team_ori,
         statics_type_str=statics_type_str,
@@ -307,6 +364,7 @@ def get_report(param):
         goals_total_ratio=format_ratio(matchs_data, "goals_total_ratio"),
         home_goals_total_ratio=format_ratio(matchs_data, "home_goals_total_ratio"),
         away_goals_total_ratio=format_ratio(matchs_data, "away_goals_total_ratio"),
+        goals_dist=format_list(matchs_data, "goals_dist"),
         number=number,
         match_goals_ratio=format_ratio(n_matchs_data, "match_goals_ratio"),
         home_number=home_number,
@@ -318,6 +376,7 @@ def get_report(param):
         season_goals_ratio=format_ratio(x_matchs_data, "season_goals_ratio"),
         home_season_goals_ratio=format_ratio(x_matchs_data, "home_season_goals_ratio"),
         away_season_goals_ratio=format_ratio(x_matchs_data, "away_season_goals_ratio"),
+        xnumber_goals_dist=format_list(x_matchs_data, "goals_dist"),
     )
     return report
 

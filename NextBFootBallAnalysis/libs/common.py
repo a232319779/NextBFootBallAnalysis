@@ -80,7 +80,7 @@ def format_ratio(data, ratio_key):
     format_list = list()
     for key, value in ratio_data.items():
         ratio = "%.2f" % (value / total)
-        format_list.append("{}-{}".format(str(key), str(ratio)))
+        format_list.append("{}:{}".format(str(key), str(ratio)))
     format_list.sort()
     return ", ".join(format_list)
 

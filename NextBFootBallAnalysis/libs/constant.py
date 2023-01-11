@@ -266,7 +266,7 @@ CLUB_NAME_MAPPING = {
     "卡尔斯鲁厄": "Karlsruhe",
     "莱比锡": "Leipzig",
     "勒沃库森": "Leverkusen",
-    "门兴格莱德巴赫": "M'Gladbach",
+    "门兴格莱德巴赫": "M'gladbach",
     "美因兹": "Mainz",
     "慕尼黑1860": "Munich 1860",
     "纽伦堡": "Nurnberg",
@@ -279,7 +279,7 @@ CLUB_NAME_MAPPING = {
     "乌尔姆": "Ulm",
     "柏林联合": "Union Berlin",
     "安达赫治": "Unterhaching",
-    "波鸿": "Wattenscheid",
+    "波鸿2": "Wattenscheid",
     "不来梅": "Werder Bremen",
     "沃尔夫斯堡": "Wolfsburg",
     # 法甲

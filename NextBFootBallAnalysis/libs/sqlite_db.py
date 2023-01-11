@@ -7,9 +7,8 @@
 # @WeChat   : NextB
 
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Column, String, BigInteger, or_, and_, distinct
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy import Column, String, BigInteger, or_, and_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.sqltypes import DateTime, Integer
 
@@ -186,6 +185,44 @@ class NextbFootballSqliteDB:
             return datas
         else:
             return []
+
+    def get_league_last_matchs(self, div, number=10):
+        """
+        获取指定联赛近number场比赛的结果，默认最近10场
+        """
+        data = (
+            self.session_maker.query(NextbFootballDatas)
+            .filter(NextbFootballDatas.div == div)
+            .order_by(NextbFootballDatas.id.desc())
+            .limit(number)
+        )
+        if data.count():
+            datas = list()
+            for d in data:
+                datas.append(d)
+            datas.reverse()
+            return datas
+        else:
+            return []
+
+    def get_season_teams(self, div, season):
+        """
+        获取指定赛季的参赛球队列表
+        """
+        data = (
+            self.session_maker.query(distinct(NextbFootballDatas.home_team))
+            .filter(
+                and_(
+                    NextbFootballDatas.div == div,
+                    NextbFootballDatas.season == season,
+                )
+            )
+            .all()
+        )
+        datas = list()
+        for d in data:
+            datas.append(d[0])
+        return datas
 
     def add_datas(self, datas):
         """

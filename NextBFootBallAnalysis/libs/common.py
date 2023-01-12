@@ -588,6 +588,9 @@ def get_statics_report(param):
     for div, name in leagues_mapping.items():
         # 查询联赛最后一场
         matchs = nfs.get_league_last_matchs(div=div, number=1)
+        # 未查询到数据
+        if not matchs:
+            continue
         m = matchs[0]
         # 填充最后一场比赛的信息
         teams = "{} - {}".format(
@@ -623,6 +626,9 @@ def get_recommend_report(param):
     for div, name in LEAGUES_MAPPING.items():
         # 查询联赛全部比赛
         matchs = nfs.get_league_last_matchs(div=div, number=MAX_LEAGUE_MATCHS_NUMBER)
+        # 未查询到数据
+        if not matchs:
+            continue
         # 查询本赛季参赛球队列表
         current_teams = nfs.get_season_teams(div, matchs[-1].season)
         # 计算球队历史场次进球间隔场次

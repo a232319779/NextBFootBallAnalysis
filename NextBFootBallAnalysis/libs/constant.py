@@ -40,9 +40,13 @@ MATCH_REPORT = """交战双方: {home_team} vs {away_team}
 双方近{number}场比赛比分场次及占比：{score_match_ratio}
 """
 
-STATICS_REPORT = """联赛名称: {div}
-统计类型: {statics_type_str}
-最近一场比赛: {last_match}
+STATICS_REPORT = """{div}最后一场比赛信息: 
+\t比赛双方: {teams}
+\t比赛时间: {time}
+\t比赛结果: {score}
+"""
+
+RECOMMEND_REPORT = """联赛名称: {div}
 基于历史比赛结果推荐球队如下:
 {data}
 基于近{number}轮比赛结果推荐球队如下:

@@ -15,8 +15,5 @@ def api_get_statics_report(args):
     通过api调用
     """
     # 参数构造
-    param = {
-        "number": args.get("number", 10),
-        "statics_type": args.get("statics_type", 0),
-    }
+    param = {"league": args.get("league", "")}
     return get_statics_report(param)

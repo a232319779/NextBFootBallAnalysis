@@ -22,22 +22,13 @@ def parse_cmd():
         epilog="使用方式：nextb-football-statics-report -n $number",
     )
     parser.add_argument(
-        "-n",
-        "--number",
-        help="指定获取最近N轮比赛的统计结果,默认最近10轮比赛.",
-        type=int,
-        dest="number",
+        "-l",
+        "--league",
+        help="获取指定联赛的最后一场比赛信息,默认获取5大联赛的最后一场比赛信息.[E0:英超,I1:意甲,SP1:西甲,D1:德甲,F1:法甲]",
+        type=str,
+        dest="league",
         action="store",
-        default=10,
-    )
-    parser.add_argument(
-        "-st",
-        "--statics_type",
-        help="指定进球统计类型,可选值包括[0: 半场, 1: 全场],默认值为: 0,统计半场进球数.",
-        type=int,
-        dest="statics_type",
-        action="store",
-        default=0,
+        default="",
     )
 
     args = parser.parse_args()
@@ -50,8 +41,5 @@ def run():
     CLI命令行入口
     """
     args = parse_cmd()
-    param = {
-        "number": args.number,
-        "statics_type": args.statics_type,
-    }
+    param = {"league": args.league}
     print(get_statics_report(param))

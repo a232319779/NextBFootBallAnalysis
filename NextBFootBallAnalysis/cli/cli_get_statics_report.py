@@ -24,7 +24,7 @@ def parse_cmd():
     parser.add_argument(
         "-n",
         "--number",
-        help="指定最近N场比赛的数目,默认最近10场比赛.",
+        help="指定获取最近N轮比赛的统计结果,默认最近10轮比赛.",
         type=int,
         dest="number",
         action="store",

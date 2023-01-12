@@ -8,6 +8,8 @@
 
 # 每支球队每个赛季踢38场比赛,最大假设踢100年
 MAX_MATCHS_NUMBER = 38 * 100
+# 每个赛季联赛最大场次，20支球队，每支球队每年踢38场，每场比赛2支球队，最大假设有100年的数据
+MAX_LEAGUE_MATCHS_NUMBER = 20 * MAX_MATCHS_NUMBER / 2
 # 默认最近场次
 DEFAULT_MATCHS_NUMBER = 10
 
@@ -41,16 +43,22 @@ MATCH_REPORT = """交战双方: {home_team} vs {away_team}
 STATICS_REPORT = """联赛名称: {div}
 统计类型: {statics_type_str}
 最近一场比赛: {last_match}
-推荐球队如下:
+基于历史比赛结果推荐球队如下:
 {data}
+基于近{number}轮比赛结果推荐球队如下:
+{number_data}
 """
 
-LEAGUES_MAPPING = {
-    "E0": "英超",
-    "I1": "意甲",
-    "SP1": "西甲",
-    "D1": "德甲",
-    "F1": "法甲"
+# 联赛名称映射表
+LEAGUES_MAPPING = {"E0": "英超", "I1": "意甲", "SP1": "西甲", "D1": "德甲", "F1": "法甲"}
+
+# 联赛参赛球队数量
+LEAGUE_TEAMS_NUMBER = {
+    "E0": 20,
+    "I1": 20,
+    "SP1": 20,
+    "D1": 18,
+    "F1": 20,
 }
 
 YEARS_MAPPING = {

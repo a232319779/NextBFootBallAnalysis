@@ -19,8 +19,10 @@ from NextBFootBallAnalysis.libs.constant import (
     MATCH_REPORT,
     STATICS_REPORT,
     MAX_MATCHS_NUMBER,
-    LEAGUES_MAPPING,
     DEFAULT_MATCHS_NUMBER,
+    MAX_LEAGUE_MATCHS_NUMBER,
+    LEAGUES_MAPPING,
+    LEAGUE_TEAMS_NUMBER,
 )
 
 
@@ -497,9 +499,100 @@ def parse_statics_last_one_match(statics_type, club_name_mapping_transfer, m):
     return last_match
 
 
+def statics_goals_dist(matchs, current_teams, statics_type):
+    """
+    统计指定球队的进球间隔场次
+    """
+    # 按球队保存比赛信息
+    teams = dict()
+    for match in matchs:
+        home_team = match.home_team
+        away_team = match.away_team
+        if home_team in current_teams:
+            if home_team not in teams.keys():
+                teams[home_team] = list()
+            teams[home_team].append(match)
+        if away_team in current_teams:
+            if away_team not in teams.keys():
+                teams[away_team] = list()
+            teams[away_team].append(match)
+
+    datas = dict()
+    for team, team_matchs in teams.items():
+        # 用于动态记录场次间隔变化
+        goals_dist_tmp = dict()
+        for match in team_matchs:
+            if 1 == statics_type:
+                tg = match.ftg
+            else:
+                tg = match.htg
+            # 统计进球间隔场次
+            if tg != -1:
+                if tg in goals_dist_tmp.keys():
+                    if team not in datas.keys():
+                        datas[team] = dict()
+                    if tg not in datas[team].keys():
+                        datas[team][tg] = list()
+                    datas[team][tg].append(goals_dist_tmp[tg])
+                # 老的进球场数间隔+1场
+                for a in goals_dist_tmp.keys():
+                    goals_dist_tmp[a] += 1
+                # 新的进球场数间隔清0
+                goals_dist_tmp[tg] = 0
+    return datas
+
+
+def recommend_goals_dist(datas, club_name_mapping_transfer):
+    """
+    获取推荐球队，推荐原则：中位数最小并且平均数最小
+    """
+    recommend_list = list()
+    for team, data in datas.items():
+        for key, value in data.items():
+            if key not in [0, 1]:
+                continue
+            tmp_list = list()
+            value_new = sorted(value)
+            # 统计进球场次最大间隔
+            max_dist = max(value_new)
+            # 统计进球场次最小间隔
+            min_dist = min(value_new)
+            # 统计进球场次平均间隔
+            mean_dist = "%.2f" % mean(value_new)
+            # 统计进球场次中位数间隔
+            median_dist = median(value_new)
+            # 统计每个进球场次间隔的占比
+            counter_str_list = list()
+            counter = Counter(value)
+            total = sum(counter.values())
+            index = 0
+            for a, b in counter.most_common():
+                b1 = "%.2f" % (b / total)
+                counter_str_list.append("{}-{}".format(str(a), str(b1)))
+                index += 1
+                # 只看top5的
+                if index >= 5:
+                    break
+
+            tmp_list.append(
+                "球队名称:{}".format(club_name_mapping_transfer.get(team, team))
+            )
+            tmp_list.append("{}场最大间隔:{}".format(str(key), max_dist))
+            tmp_list.append("{}场平均间隔:{}".format(str(key), mean_dist))
+            tmp_list.append("{}场中位数:{}".format(str(key), median_dist))
+            tmp_list.append(
+                "{}场出现场次及占比:{}".format(str(key), ",".join(counter_str_list))
+            )
+            tmp = [median_dist, mean_dist, ",".join(tmp_list)]
+            recommend_list.append(tmp)
+    recommend_list = sorted(recommend_list, key=lambda a: (a[0], a[1]))
+    out = [a[2] for a in recommend_list[:3]]
+    return "\n".join(out)
+
+
 def get_statics_report(param):
     number = param.get("number", DEFAULT_MATCHS_NUMBER)
-    # 转换为中文名臣
+    # 转换为中文名称
     CLUB_NAME_MAPPING_TRANSFER = dict(
         zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
     )
@@ -511,30 +604,37 @@ def get_statics_report(param):
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     reports = list()
-    current_teams = list()
     for div, name in LEAGUES_MAPPING.items():
-        # 查询全部比赛
-        matchs = nfs.get_league_last_matchs(div=div, number=number)
+        # 查询联赛全部比赛
+        matchs = nfs.get_league_last_matchs(div=div, number=MAX_LEAGUE_MATCHS_NUMBER)
+        # 查询本赛季参赛球队列表
+        current_teams = nfs.get_season_teams(div, matchs[-1].season)
+        # 填充最后一场比赛的信息
         last_match = parse_statics_last_one_match(
             statics_type, CLUB_NAME_MAPPING_TRANSFER, matchs[-1]
         )
+        # 计算球队历史场次进球间隔场次
+        team_goals_dist = statics_goals_dist(matchs, current_teams, statics_type)
+        data = recommend_goals_dist(team_goals_dist, CLUB_NAME_MAPPING_TRANSFER)
+        # 获取最近number轮比赛
+        last_number_matchs = matchs[-number * LEAGUE_TEAMS_NUMBER.get(div) :]
+        # 计算球队最近number轮场次进球间隔场次
+        team_number_goals_dist = statics_goals_dist(
+            last_number_matchs, current_teams, statics_type
+        )
+        number_data = recommend_goals_dist(
+            team_number_goals_dist, CLUB_NAME_MAPPING_TRANSFER
+        )
+
         report = STATICS_REPORT.format(
-            div=name, statics_type_str=statics_type_str, last_match=last_match, data=""
+            div=name,
+            statics_type_str=statics_type_str,
+            last_match=last_match,
+            data=data,
+            number=number,
+            number_data=number_data,
         )
         reports.append(report)
-        if 0 == len(current_teams):
-            current_teams.extend(nfs.get_season_teams(div, matchs[-1].season))
-        # 查询最近number场比赛
-        # n_match = nfs.get_last_matchs(
-        #     home_team=home_team, away_team=away_team, number=number
-        # )
-        # n_matchs_data = parse_match(
-        #     n_match,
-        #     statics_type=statics_type,
-        #     total_key="number",
-        #     goals_ratio_key="goals_match_ratio",
-        #     score_ratio_key="score_match_ratio",
-        # )
     nfs.close_session()
     nfs.close()
     return "\n".join(reports)

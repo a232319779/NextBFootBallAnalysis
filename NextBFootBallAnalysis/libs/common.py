@@ -577,7 +577,7 @@ def get_statics_report(param):
     )
     if league:
         if LEAGUES_MAPPING.get(league, None) is None:
-            print("输入正确的联赛名称：[E0,I1,SP1,D1,F1]")
+            print("输入正确的联赛名称，取值包括：[英超,意甲,西甲,德甲,法甲]")
             exit()
         leagues_mapping = {league: LEAGUES_MAPPING.get(league)}
     else:
@@ -585,9 +585,11 @@ def get_statics_report(param):
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     reports = list()
-    for div, name in leagues_mapping.items():
+    for name, div in leagues_mapping.items():
         # 查询联赛最后一场
         matchs = nfs.get_league_last_matchs(div=div, number=1)
+        if not matchs:
+            continue
         m = matchs[0]
         # 填充最后一场比赛的信息
         teams = "{} - {}".format(
@@ -623,6 +625,8 @@ def get_recommend_report(param):
     for div, name in LEAGUES_MAPPING.items():
         # 查询联赛全部比赛
         matchs = nfs.get_league_last_matchs(div=div, number=MAX_LEAGUE_MATCHS_NUMBER)
+        if not matchs:
+            continue
         # 查询本赛季参赛球队列表
         current_teams = nfs.get_season_teams(div, matchs[-1].season)
         # 计算球队历史场次进球间隔场次

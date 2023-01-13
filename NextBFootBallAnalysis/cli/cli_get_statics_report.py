@@ -24,7 +24,7 @@ def parse_cmd():
     parser.add_argument(
         "-l",
         "--league",
-        help="获取指定联赛的最后一场比赛信息,默认获取5大联赛的最后一场比赛信息.[E0:英超,I1:意甲,SP1:西甲,D1:德甲,F1:法甲]",
+        help="获取指定联赛的最后一场比赛信息,默认获取5大联赛的最后一场比赛信息.取值包括：[英超,意甲,西甲,德甲,法甲]",
         type=str,
         dest="league",
         action="store",

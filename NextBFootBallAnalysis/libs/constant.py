@@ -54,7 +54,7 @@ RECOMMEND_REPORT = """联赛名称: {div}
 """
 
 # 联赛名称映射表
-LEAGUES_MAPPING = {"E0": "英超", "I1": "意甲", "SP1": "西甲", "D1": "德甲", "F1": "法甲"}
+LEAGUES_MAPPING = {"英超": "E0", "意甲": "I1", "西甲": "SP1", "德甲": "D1", "法甲": "F1"}
 
 # 联赛参赛球队数量
 LEAGUE_TEAMS_NUMBER = {

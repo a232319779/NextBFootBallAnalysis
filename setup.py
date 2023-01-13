@@ -53,6 +53,8 @@ do_setup(
             "nextb-football-update-db = NextBFootBallAnalysis.cli.cli_update_football_db:run",
             "nextb-football-get-team-report = NextBFootBallAnalysis.cli.cli_get_team_report:run",
             "nextb-football-get-match-report = NextBFootBallAnalysis.cli.cli_get_match_report:run",
+            "nextb-football-get-statics-report = NextBFootBallAnalysis.cli.cli_get_statics_report:run",
+            "nextb-football-get-recommend-report = NextBFootBallAnalysis.cli.cli_get_recommend_report:run",
         ],
     },
     classifiers=[

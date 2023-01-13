@@ -588,6 +588,7 @@ def get_statics_report(param):
     for name, div in leagues_mapping.items():
         # 查询联赛最后一场
         matchs = nfs.get_league_last_matchs(div=div, number=1)
+        # 未查询到数据
         if not matchs:
             continue
         m = matchs[0]
@@ -622,9 +623,10 @@ def get_recommend_report(param):
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     reports = list()
-    for div, name in LEAGUES_MAPPING.items():
+    for name, div in LEAGUES_MAPPING.items():
         # 查询联赛全部比赛
         matchs = nfs.get_league_last_matchs(div=div, number=MAX_LEAGUE_MATCHS_NUMBER)
+        # 未查询到数据
         if not matchs:
             continue
         # 查询本赛季参赛球队列表

@@ -623,7 +623,7 @@ def get_recommend_report(param):
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     reports = list()
-    for div, name in LEAGUES_MAPPING.items():
+    for name, div in LEAGUES_MAPPING.items():
         # 查询联赛全部比赛
         matchs = nfs.get_league_last_matchs(div=div, number=MAX_LEAGUE_MATCHS_NUMBER)
         # 未查询到数据

@@ -55,6 +55,7 @@ do_setup(
             "nextb-football-get-match-report = NextBFootBallAnalysis.cli.cli_get_match_report:run",
             "nextb-football-get-statics-report = NextBFootBallAnalysis.cli.cli_get_statics_report:run",
             "nextb-football-get-recommend-report = NextBFootBallAnalysis.cli.cli_get_recommend_report:run",
+            "nextb-football-get-recommend-csv = NextBFootBallAnalysis.cli.cli_get_recommend_csv:run",
         ],
     },
     classifiers=[

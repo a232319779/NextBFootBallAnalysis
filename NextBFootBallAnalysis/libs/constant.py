@@ -12,6 +12,18 @@ MAX_MATCHS_NUMBER = 38 * 100
 MAX_LEAGUE_MATCHS_NUMBER = 20 * MAX_MATCHS_NUMBER / 2
 # 默认最近场次
 DEFAULT_MATCHS_NUMBER = 10
+# 统计类型，0：半场，1：全场
+STATICS_TYPE_HALF = 0
+STATICS_TYPE_FULL = 1
+# 统计数据类型
+STATICS_DATA_TYPE = {
+    "all": MAX_MATCHS_NUMBER,
+    "10": 10,
+    "20": 20,
+    "40": 40,
+    "50": 50,
+    "80": 80
+}
 
 TEAM_REPORT = """球队名称：{team}
 

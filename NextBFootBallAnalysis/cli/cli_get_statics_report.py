@@ -8,6 +8,7 @@
 
 
 import argparse
+from prettytable import PrettyTable
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
 from NextBFootBallAnalysis.libs.common import get_statics_report
 
@@ -42,4 +43,8 @@ def run():
     """
     args = parse_cmd()
     param = {"league": args.league}
-    print(get_statics_report(param))
+    datas = get_statics_report(param)
+    x = PrettyTable()
+    x.field_names = ["联赛名称", "赛季", "比赛时间", "主队", "客队", "半场比分", "全场比分"]
+    x.add_rows(datas)
+    print(x)

@@ -788,7 +788,7 @@ def get_team_match(param):
     match_datas = nfs.get_team_last_matchs(team=team, number=number)
     for m in match_datas:
         tmp = list()
-        tmp.append(m.date_time.strftime("%Y/%m/%d %H"))
+        tmp.append(m.date_time.strftime("%Y/%m/%d %H:%M"))
         tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team))
         tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team))
         tmp.append("{}-{}".format(m.hthg, m.htag))

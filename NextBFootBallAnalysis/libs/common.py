@@ -773,3 +773,26 @@ def get_recommend_csv(param):
     with open(csv_name, "w", encoding="utf8") as f:
         f.write(headers + "\n")
         f.write("\n".join(datas))
+
+def get_team_match(param):
+    team_ori = param.get("team")
+    team = CLUB_NAME_MAPPING.get(team_ori, team_ori)
+    # 转换为中文名称
+    CLUB_NAME_MAPPING_TRANSFER = dict(
+        zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
+    )
+    number = param.get("number", DEFAULT_MATCHS_NUMBER)
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    datas = list()
+    match_datas = nfs.get_team_last_matchs(team=team, number=number)
+    for m in match_datas:
+        tmp = list()
+        tmp.append(m.date_time.strftime("%Y/%m/%d %H"))
+        tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team))
+        tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team))
+        tmp.append("{}-{}".format(m.hthg, m.htag))
+        tmp.append("{}-{}".format(m.fthg, m.ftag))
+        datas.append(tmp)
+    datas.reverse()
+    return datas

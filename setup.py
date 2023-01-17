@@ -56,6 +56,7 @@ do_setup(
             "nextb-football-get-statics-report = NextBFootBallAnalysis.cli.cli_get_statics_report:run",
             "nextb-football-get-recommend-report = NextBFootBallAnalysis.cli.cli_get_recommend_report:run",
             "nextb-football-get-recommend-csv = NextBFootBallAnalysis.cli.cli_get_recommend_csv:run",
+            "nextb-football-get-team-match = NextBFootBallAnalysis.cli.cli_get_team_match:run",
         ],
     },
     classifiers=[
@@ -68,6 +69,7 @@ do_setup(
     license="MIT",
     include_package_data=True,
     install_requires=[
-        "sqlalchemy==1.4.31"
+        "sqlalchemy==1.4.31",
+        "prettytable==3.6.0"
     ],
 )

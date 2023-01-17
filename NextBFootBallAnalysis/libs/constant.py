@@ -55,7 +55,8 @@ MATCH_REPORT = """交战双方: {home_team} vs {away_team}
 STATICS_REPORT = """{div}最后一场比赛信息: 
 \t比赛双方: {teams}
 \t比赛时间: {time}
-\t比赛结果: {score}
+\t半场比分: {h_score}
+\t全场比分: {f_score}
 """
 
 RECOMMEND_REPORT = """联赛名称: {div}

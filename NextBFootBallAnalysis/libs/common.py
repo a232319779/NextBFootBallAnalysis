@@ -17,7 +17,6 @@ from NextBFootBallAnalysis.libs.constant import (
     CLUB_NAME_MAPPING,
     TEAM_REPORT,
     MATCH_REPORT,
-    STATICS_REPORT,
     RECOMMEND_REPORT,
     MAX_MATCHS_NUMBER,
     DEFAULT_MATCHS_NUMBER,
@@ -580,14 +579,14 @@ def get_statics_report(param):
     )
     if league:
         if LEAGUES_MAPPING.get(league, None) is None:
-            print("输入正确的联赛名称，取值包括：[英超,意甲,西甲,德甲,法甲]")
+            print("输入错误，请输入正确的联赛名称，取值包括：[英超,意甲,西甲,德甲,法甲]")
             exit()
         leagues_mapping = {league: LEAGUES_MAPPING.get(league)}
     else:
         leagues_mapping = LEAGUES_MAPPING
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
-    reports = list()
+    datas = list()
     for name, div in leagues_mapping.items():
         # 查询联赛最后一场
         matchs = nfs.get_league_last_matchs(div=div, number=1)
@@ -595,21 +594,19 @@ def get_statics_report(param):
         if not matchs:
             continue
         m = matchs[0]
-        # 填充最后一场比赛的信息
-        teams = "{} - {}".format(
-            CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
-            CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
-        )
-        match_time = m.date_time.strftime("%Y-%m-%d %H:%M")
-        match_score = "{}-{}".format(m.fthg, m.ftag)
-
-        report = STATICS_REPORT.format(
-            div=name, teams=teams, time=match_time, score=match_score
-        )
-        reports.append(report)
+        # 联赛名称, 赛季, 比赛时间, 主队, 客队, 半场比分, 全场比分
+        tmp = list()
+        tmp.append(name)
+        tmp.append(m.season)
+        tmp.append(m.date_time.strftime("%Y/%m/%d %H:%M"))
+        tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team))
+        tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team))
+        tmp.append("{}-{}".format(m.hthg, m.htag))
+        tmp.append("{}-{}".format(m.fthg, m.ftag))
+        datas.append(tmp)
     nfs.close_session()
     nfs.close()
-    return "".join(reports)
+    return datas
 
 
 def get_recommend_report(param):
@@ -788,7 +785,7 @@ def get_team_match(param):
     match_datas = nfs.get_team_last_matchs(team=team, number=number)
     for m in match_datas:
         tmp = list()
-        tmp.append(m.date_time.strftime("%Y/%m/%d %H"))
+        tmp.append(m.date_time.strftime("%Y/%m/%d %H:%M"))
         tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team))
         tmp.append(CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team))
         tmp.append("{}-{}".format(m.hthg, m.htag))

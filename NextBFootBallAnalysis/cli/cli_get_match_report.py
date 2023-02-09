@@ -33,7 +33,7 @@ def parse_cmd():
     parser.add_argument(
         "-at",
         "--away-team",
-        help="指定主队名称.",
+        help="指定客队名称.",
         type=str,
         dest="away_team",
         action="store",

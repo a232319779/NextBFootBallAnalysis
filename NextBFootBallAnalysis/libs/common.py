@@ -7,7 +7,9 @@
 # @WeChat   : NextB
 
 import os
+import sys
 import datetime
+import multiprocessing
 from tqdm import tqdm
 from collections import Counter
 from statistics import mean, median, median_low, median_high
@@ -791,58 +793,44 @@ def get_recommend_csv(param):
         f.write("\n".join(datas))
 
 
-def get_recommend_merge_csv(param):
-    csv_name = param.get("csv_name")
-    number = param.get("number", 0)
-    number = number if number != 0 else MAX_MATCHS_NUMBER * 5
+def process_merge_data(epl_teams, others_teams, number):
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
     # 转换为中文名称
     CLUB_NAME_MAPPING_TRANSFER = dict(
         zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
     )
-
-    nfs = NextbFootballSqliteDB()
-    nfs.create_session()
     datas = list()
-    current_teams = dict()
-    # 获取当前赛季各大联赛参赛球队列表
-    for _, div in LEAGUES_MAPPING.items():
-        # 查询当前赛季
-        last_match = nfs.get_league_last_matchs(div=div, number=1)
-        # 未查询到数据
-        if not last_match:
-            continue
-        # 查询本赛季参赛球队列表
-        current_teams[div] = nfs.get_season_teams(div, last_match[-1].season)
     for e0_team in tqdm(
-        current_teams["E0"],
+        epl_teams,
         unit="team",
         desc="英超",
         position=0,
         leave=False,
     ):
         for i1_team in tqdm(
-            current_teams["I1"],
+            others_teams["I1"],
             unit="team",
             desc="意甲",
             position=1,
             leave=False,
         ):
             for sp1_team in tqdm(
-                current_teams["SP1"],
+                others_teams["SP1"],
                 unit="team",
                 desc="西甲",
                 position=2,
                 leave=False,
             ):
                 for f1_team in tqdm(
-                    current_teams["F1"],
+                    others_teams["F1"],
                     unit="team",
                     desc="法甲",
                     position=3,
                     leave=False,
                 ):
                     for d1_team in tqdm(
-                        current_teams["D1"],
+                        others_teams["D1"],
                         unit="team",
                         desc="德甲",
                         position=4,
@@ -864,8 +852,51 @@ def get_recommend_merge_csv(param):
                         }
                         p = parse_csv_merge_recommend_data(team_recommend_data)
                         datas.extend(p)
+    return datas
+
+
+def get_recommend_merge_csv(param):
+    if sys.platform.startswith("win"):
+        # On Windows calling this function is necessary.
+        multiprocessing.freeze_support()
+    try:
+        from concurrent.futures import ProcessPoolExecutor, wait, ALL_COMPLETED
+    except:
+        sys.exit(0)
+    csv_name = param.get("csv_name")
+    number = param.get("number", 0)
+    number = number if number != 0 else MAX_MATCHS_NUMBER * 5
+
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    datas = list()
+    current_teams = dict()
+    # 获取当前赛季各大联赛参赛球队列表
+    for _, div in LEAGUES_MAPPING.items():
+        # 查询当前赛季
+        last_match = nfs.get_league_last_matchs(div=div, number=1)
+        # 未查询到数据
+        if not last_match:
+            continue
+        # 查询本赛季参赛球队列表
+        current_teams[div] = nfs.get_season_teams(div, last_match[-1].season)
     nfs.close_session()
     nfs.close()
+    max_workers = 10
+    e0_teams = current_teams["E0"]
+    datas = list()
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        all_task = [
+            executor.submit(
+                process_merge_data, e0_teams[k : k + 2], current_teams, number
+            )
+            for k in range(0, len(e0_teams), 2)
+        ]
+        wait(all_task, return_when=ALL_COMPLETED)
+        for task in all_task:
+            result = task.result()
+            datas.extend(result)
+
     headers = "球队名称,历史场次,进球数,最大,1/4位,1/2位,3/4位,平均"
     with open(csv_name, "w", encoding="utf8") as f:
         f.write(headers + "\n")

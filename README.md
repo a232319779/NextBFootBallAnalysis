@@ -18,11 +18,11 @@
 
 |联赛|数据录入|开始赛季|数据更新时间|备注|
 |----|----|----|----|----|
-|英超|✔|1993-1994|2023-01-15|pip包自带|
-|意甲|✔|1993-1994|2023-01-16|需单独获取|
-|西甲|✔|1993-1994|2023-01-16|需单独获取|
-|德甲|✔|1993-1994|2022-11-13|需单独获取|
-|法甲|✔|1993-1994|2023-01-15|需单独获取|
+|英超|✔|1993-1994|2023-02-05|pip包自带|
+|意甲|✔|1993-1994|2023-02-07|需单独获取|
+|西甲|✔|1993-1994|2023-02-06|需单独获取|
+|德甲|✔|1993-1994|2022-02-05|需单独获取|
+|法甲|✔|1993-1994|2023-02-05|需单独获取|
 
 **数据库太大，发行包无法上传，关注公众号：[NextB](#七公众号二维码)，发送私信获取。或者直接使用小程序: [NextB小帮手](#六小程序二维码)，获取报告结果。**
 
@@ -37,6 +37,8 @@
 |nextb-football-get-statics-report|NextB获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#33-联赛信息格式)|`nextb-football-get-statics-report`|
 |nextb-football-get-recommend-report|NextB获取推荐球队分析报告，报告格式参考[推荐球队报告格式](#34-推荐球队报告格式)|`nextb-football-get-recommend-report`|
 |nextb-football-get-team-match|NextB获取指定球队最近N场比赛结果，结果格式参考[球队比赛结果](#35-球队比赛结果)|`nextb-football-get-team-match -n 5`|
+|nextb-football-get-recommend-csv|NextB生成球队推荐csv文件|`nextb-football-get-recommend-csv`|
+|nextb-football-get-recommend-merge-csv|NextB通过穷举法，生成5大联赛球队最佳组合推荐csv文件|`nextb-football-get-recommend-merge-csv`|
 |||||
 
 ## 三、分析结果

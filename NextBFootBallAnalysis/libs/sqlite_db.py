@@ -158,6 +158,30 @@ class NextbFootballSqliteDB:
         else:
             return []
 
+    def get_mergeteams_matchs(self, teams, number=10):
+        """
+        获取指定球队列表最近number场比赛的结果，默认最近10条
+        """
+        data = (
+            self.session_maker.query(NextbFootballDatas)
+            .filter(
+                or_(
+                    NextbFootballDatas.home_team.in_(teams),
+                    NextbFootballDatas.away_team.in_(teams),
+                )
+            )
+            .order_by(NextbFootballDatas.date_time.desc())
+            .limit(number)
+        )
+        if data.count():
+            datas = list()
+            for d in data:
+                datas.append(d)
+            datas.reverse()
+            return datas
+        else:
+            return []
+
     def get_team_last_season_matchs(self, team, number=5):
         """
         获取指定球队最近number个赛季的比赛结果，默认最近5个赛季

@@ -100,7 +100,7 @@ def simulation(datas, goals, statics_type):
         if tg < 0:
             continue
         if start_time == "":
-            start_time = data.date_time.strftime("%Y-%m-%d %H:%M:%S")
+            start_time = data.date_time.strftime("%Y-%m-%d")
         # 输
         if goals != tg:
             statics_data.append(amount)
@@ -133,11 +133,18 @@ def simulation(datas, goals, statics_type):
     for i in range(0, n):
         sum_max_cost += 10 * 2**i
     # 总收益
-    total_profit = sum(profits)
+    total_profit = int(sum(profits))
     # 收益率
     profit_ratio = total_profit / sum_max_cost * 100
 
-    return [start_time,str(correct_count), str(n), str(sum_max_cost), str(total_profit), "%.2f" % profit_ratio]
+    return [
+        start_time,
+        str(correct_count),
+        str(n),
+        str(sum_max_cost),
+        str(total_profit),
+        "%.2f" % profit_ratio,
+    ]
 
 
 def start(param):
@@ -146,6 +153,9 @@ def start(param):
     statics_type = param.get("statics_type")
     goals = param.get("goals")
     csv_datas = list()
+    date_times = list()
+    costs_data = list()
+    profits_data = list()
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     english_teams = [CLUB_NAME_MAPPING.get(t, t) for t in teams]
@@ -156,10 +166,13 @@ def start(param):
         statics_type_str = "全场进球"
     for i in tqdm(range(0, data_len), unit="team", desc="NexBFootBall投注仿真计算中"):
         datas = match_datas[-data_len + i :]
-        s_data = simulation(datas=datas, goals=goals,statics_type=statics_type)
+        s_data = simulation(datas=datas, goals=goals, statics_type=statics_type)
         csv_data = [s_data[0], statics_type_str, str(goals), str(data_len - i)]
         csv_data.extend(s_data[1:])
         csv_datas.append(",".join(csv_data))
+        date_times.append(csv_data[0])
+        costs_data.append(csv_data[6])
+        profits_data.append(csv_data[7])
     nfs.close_session()
     nfs.close()
 
@@ -169,6 +182,15 @@ def start(param):
     with open(file_name, "w", encoding="utf8") as f:
         f.write(headers)
         f.write("\n".join(csv_datas))
+    team_names = "+".join(teams)
+    file_name = "{}_{}_flourish.csv".format(team_names, goals)
+    flourish_headers = "标签,{}\n".format(",".join(date_times))
+    costs_data_str = "最大投入金额,{}\n".format(",".join(costs_data))
+    profits_data_str = "盈利金额,{}\n".format(",".join(profits_data))
+    with open(file_name, "w", encoding="utf8") as f:
+        f.write(flourish_headers)
+        f.write(costs_data_str)
+        f.write(profits_data_str)
 
 
 def run():

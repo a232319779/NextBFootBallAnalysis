@@ -8,6 +8,7 @@
 
 import setuptools
 
+
 def read_version():
     """
     读取打包的版本信息
@@ -21,6 +22,7 @@ def read_version():
     # 默认返回
     return "1.0.0"
 
+
 def read_readme():
     """
     读取README信息
@@ -28,11 +30,13 @@ def read_readme():
     with open("./README.md", "r", encoding="utf8") as f:
         return f.read()
 
+
 def do_setup(**kwargs):
     try:
         setuptools.setup(**kwargs)
     except (SystemExit, Exception) as e:
         exit(1)
+
 
 version = read_version()
 long_description = read_readme()
@@ -58,6 +62,7 @@ do_setup(
             "nextb-football-get-recommend-csv = NextBFootBallAnalysis.cli.cli_get_recommend_csv:run",
             "nextb-football-get-team-match = NextBFootBallAnalysis.cli.cli_get_team_match:run",
             "nextb-football-get-recommend-merge-csv = NextBFootBallAnalysis.cli.cli_get_recommend_merge_csv:run",
+            "nextb-football-simulation = NextBFootBallAnalysis.cli.cli_simulation:run",
         ],
     },
     classifiers=[
@@ -69,8 +74,5 @@ do_setup(
     keywords=[],
     license="MIT",
     include_package_data=True,
-    install_requires=[
-        "sqlalchemy==1.4.31",
-        "prettytable==3.6.0"
-    ],
+    install_requires=["sqlalchemy==1.4.31", "prettytable==3.6.0"],
 )

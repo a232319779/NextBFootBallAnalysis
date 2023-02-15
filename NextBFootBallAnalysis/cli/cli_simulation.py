@@ -68,7 +68,7 @@ def parse_cmd():
     parser.add_argument(
         "-g",
         "--goals",
-        help="指定仿真计算的进球数量，默认为：1球",
+        help="指定仿真计算的进球数量，可选值包括[0,1,2,3,4,5,6,7]，自动忽略其他值默认为：1球",
         nargs="+",
         dest="goals",
         action="store",
@@ -132,6 +132,9 @@ def simulation(datas, goals, statics_type, config):
             continue
         if start_time == "":
             start_time = data.date_time.strftime("%Y-%m-%d")
+        # 超过7球的，统一记为7球
+        if tg > 7:
+            tg = 7
         # 输
         if goals != tg:
             statics_data.append(amount)
@@ -191,6 +194,9 @@ def start(param):
     profits_data = dict()
     for g in goals:
         g = int(g)
+        # 只记录[0,7]区间内的值
+        if g > 7 or g < 0:
+            continue
         csv_datas[g] = list()
         date_times[g] = list()
         costs_data[g] = list()
@@ -207,6 +213,9 @@ def start(param):
         datas = match_datas[-data_len + i :]
         for goal in goals:
             goal = int(goal)
+            # 只记录[0,7]区间内的值
+            if goal > 7 or goal < 0:
+                continue
             s_data = simulation(
                 datas=datas, goals=goal, statics_type=statics_type, config=config
             )
@@ -227,18 +236,25 @@ def start(param):
         f.write(headers)
         for goal in goals:
             goal = int(goal)
+            # 只记录[0,7]区间内的值
+            if goal > 7 or goal < 0:
+                continue
             f.write("\n".join(csv_datas[goal]))
             f.write("\n")
     file_name = "{}_{}_{}_flourish.csv".format(team_names, statics_type_str, goals_str)
-    flourish_headers = "标签,{}\n".format(",".join(date_times[int(goals[0])]))
-    with open(file_name, "w", encoding="utf8") as f:
-        f.write(flourish_headers)
-        for goal in goals:
-            goal = int(goal)
-            costs_data_str = "{}球最大投入金额,{}\n".format(goal, ",".join(costs_data[goal]))
-            profits_data_str = "{}球盈利金额,{}\n".format(goal, ",".join(profits_data[goal]))
-            f.write(costs_data_str)
-            f.write(profits_data_str)
+    if len(date_times) > 0:
+        flourish_headers = "标签,{}\n".format(",".join(date_times[int(goals[0])]))
+        with open(file_name, "w", encoding="utf8") as f:
+            f.write(flourish_headers)
+            for goal in goals:
+                goal = int(goal)
+                # 只记录[0,7]区间内的值
+                if goal > 7 or goal < 0:
+                    continue
+                costs_data_str = "{}球最大投入金额,{}\n".format(goal, ",".join(costs_data[goal]))
+                profits_data_str = "{}球盈利金额,{}\n".format(goal, ",".join(profits_data[goal]))
+                f.write(costs_data_str)
+                f.write(profits_data_str)
 
 
 def run():

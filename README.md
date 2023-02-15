@@ -39,6 +39,7 @@
 |nextb-football-get-team-match|NextB获取指定球队最近N场比赛结果，结果格式参考[球队比赛结果](#35-球队比赛结果)|`nextb-football-get-team-match -n 5`|
 |nextb-football-get-recommend-csv|NextB生成球队推荐csv文件|`nextb-football-get-recommend-csv`|
 |nextb-football-get-recommend-merge-csv|NextB通过穷举法，生成5大联赛球队最佳组合推荐csv文件|`nextb-football-get-recommend-merge-csv`|
+|nextb-football-simulation|NextB基于足球数据的彩票投注仿真程序|`nextb-football-simulation`|
 |||||
 
 ## 三、分析结果

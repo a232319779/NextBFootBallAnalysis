@@ -8,6 +8,7 @@
 
 
 import math
+import json
 import argparse
 from tqdm import tqdm
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
@@ -16,7 +17,7 @@ from NextBFootBallAnalysis.libs.sqlite_db import NextbFootballSqliteDB
 
 __doc__ = """
 投注条件：
-    假设赔率固定为：2.3
+    假设赔率固定，取中国体彩赔率
 
 投注策略：
 1. 起投10元
@@ -25,11 +26,6 @@ __doc__ = """
     a. 小于等于40元则倍投
     b. 大于40元则重新投注
 """
-
-ODDS = 2.3
-INITIAL_AMOUNT = 10
-MULTIPLE = 2.0
-THRESHOLD = 40
 
 
 def parse_cmd():
@@ -46,10 +42,9 @@ def parse_cmd():
         "--teams",
         nargs="+",
         help="指定球队名称",
-        # type=list,
         dest="teams",
         action="store",
-        default=None,
+        default=["阿森纳"],
     )
 
     parser.add_argument(
@@ -64,20 +59,29 @@ def parse_cmd():
     parser.add_argument(
         "-st",
         "--statics_type",
-        help="指定进球统计类型,可选值包括[0: 半场, 1: 全场],默认值为: 0,统计半场进球数.",
+        help="指定进球统计类型,可选值包括[0: 半场, 1: 全场],默认值为: 1,统计全场进球数.",
         type=int,
         dest="statics_type",
         action="store",
-        default=0,
+        default=1,
     )
     parser.add_argument(
         "-g",
         "--goals",
         help="指定仿真计算的进球数量，默认为：1球",
-        type=int,
+        nargs="+",
         dest="goals",
         action="store",
-        default=1,
+        default=["1"],
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        help="指定回测参数，如：赔率、投注方式等",
+        type=str,
+        dest="config",
+        action="store",
+        default="",
     )
 
     args = parser.parse_args()
@@ -85,10 +89,37 @@ def parse_cmd():
     return args
 
 
-def simulation(datas, goals, statics_type):
+def read_config(file_name):
+    if file_name == "":
+        return {
+            # 2023.02.15中国体彩全场进球赔率
+            "ODDS": {
+                "0": 9.5,
+                "1": 4.25,
+                "2": 3.25,
+                "3": 3.9,
+                "4": 6.5,
+                "5": 11.5,
+                "6": 30.0,
+                "7": 40.0,
+            },
+            "INITIAL_AMOUNT": 10,
+            "MULTIPLE": 2.0,
+            "THRESHOLD": 40,
+        }
+    with open(file_name, "r", encoding="utf8") as f:
+        data = f.read()
+    return json.loads(data)
+
+
+def simulation(datas, goals, statics_type, config):
     statics_datas = list()
+    initial_amount = config.get("INITIAL_AMOUNT")
+    multiple = config.get("MULTIPLE")
+    threshold = config.get("THRESHOLD")
+    odds = config.get("ODDS", {}).get(str(goals), 3.0)
     # 初始资金10元
-    amount = INITIAL_AMOUNT
+    amount = initial_amount
     start_time = ""
     for data in datas:
         # [投注金额,盈利金额]
@@ -105,18 +136,18 @@ def simulation(datas, goals, statics_type):
         if goals != tg:
             statics_data.append(amount)
             statics_data.append(-amount)
-            amount = amount * MULTIPLE
+            amount = amount * multiple
         # 赢
         else:
             # 如果投注金额小于等于THRESHOLD，继续倍投
-            if amount <= THRESHOLD:
+            if amount <= threshold:
                 statics_data.append(amount)
-                statics_data.append(amount * ODDS - amount)
-                amount = amount * MULTIPLE
+                statics_data.append(amount * odds - amount)
+                amount = amount * multiple
             else:
                 statics_data.append(amount)
-                statics_data.append(amount * ODDS - amount)
-                amount = INITIAL_AMOUNT
+                statics_data.append(amount * odds - amount)
+                amount = initial_amount
         statics_datas.append(statics_data)
 
     # 统计投入
@@ -128,7 +159,7 @@ def simulation(datas, goals, statics_type):
 
     # 连续最大投入成本
     max_cost = max(costs)
-    n = int(math.log(int(max_cost / INITIAL_AMOUNT), 2)) + 1
+    n = int(math.log(int(max_cost / initial_amount), 2)) + 1
     sum_max_cost = 0
     for i in range(0, n):
         sum_max_cost += 10 * 2**i
@@ -148,14 +179,22 @@ def simulation(datas, goals, statics_type):
 
 
 def start(param):
-    teams = param.get("teams", [])
+    teams = param.get("teams")
     number = param.get("number")
     statics_type = param.get("statics_type")
     goals = param.get("goals")
-    csv_datas = list()
-    date_times = list()
-    costs_data = list()
-    profits_data = list()
+    config_name = param.get("config")
+    config = read_config(config_name)
+    csv_datas = dict()
+    date_times = dict()
+    costs_data = dict()
+    profits_data = dict()
+    for g in goals:
+        g = int(g)
+        csv_datas[g] = list()
+        date_times[g] = list()
+        costs_data[g] = list()
+        profits_data[g] = list()
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     english_teams = [CLUB_NAME_MAPPING.get(t, t) for t in teams]
@@ -166,31 +205,40 @@ def start(param):
         statics_type_str = "全场进球"
     for i in tqdm(range(0, data_len), unit="team", desc="NexBFootBall投注仿真计算中"):
         datas = match_datas[-data_len + i :]
-        s_data = simulation(datas=datas, goals=goals, statics_type=statics_type)
-        csv_data = [s_data[0], statics_type_str, str(goals), str(data_len - i)]
-        csv_data.extend(s_data[1:])
-        csv_datas.append(",".join(csv_data))
-        date_times.append(csv_data[0])
-        costs_data.append(csv_data[6])
-        profits_data.append(csv_data[7])
+        for goal in goals:
+            goal = int(goal)
+            s_data = simulation(
+                datas=datas, goals=goal, statics_type=statics_type, config=config
+            )
+            csv_data = [s_data[0], statics_type_str, str(goal), str(data_len - i)]
+            csv_data.extend(s_data[1:])
+            csv_datas[goal].append(",".join(csv_data))
+            date_times[goal].append(csv_data[0])
+            costs_data[goal].append(csv_data[6])
+            profits_data[goal].append(csv_data[7])
     nfs.close_session()
     nfs.close()
 
     headers = "起始时间,投注类型,投注进球数,投注场数,正确场次,连续错误最大场次,投注金额,盈利金额,收益率\n"
     team_names = "+".join(teams)
-    file_name = "{}_{}.csv".format(team_names, goals)
+    goals_str = "+".join(goals)
+    file_name = "{}_{}_{}.csv".format(team_names, statics_type_str, goals_str)
     with open(file_name, "w", encoding="utf8") as f:
         f.write(headers)
-        f.write("\n".join(csv_datas))
-    team_names = "+".join(teams)
-    file_name = "{}_{}_flourish.csv".format(team_names, goals)
-    flourish_headers = "标签,{}\n".format(",".join(date_times))
-    costs_data_str = "最大投入金额,{}\n".format(",".join(costs_data))
-    profits_data_str = "盈利金额,{}\n".format(",".join(profits_data))
+        for goal in goals:
+            goal = int(goal)
+            f.write("\n".join(csv_datas[goal]))
+            f.write("\n")
+    file_name = "{}_{}_{}_flourish.csv".format(team_names, statics_type_str, goals_str)
+    flourish_headers = "标签,{}\n".format(",".join(date_times[int(goals[0])]))
     with open(file_name, "w", encoding="utf8") as f:
         f.write(flourish_headers)
-        f.write(costs_data_str)
-        f.write(profits_data_str)
+        for goal in goals:
+            goal = int(goal)
+            costs_data_str = "{}球最大投入金额,{}\n".format(goal, ",".join(costs_data[goal]))
+            profits_data_str = "{}球盈利金额,{}\n".format(goal, ",".join(profits_data[goal]))
+            f.write(costs_data_str)
+            f.write(profits_data_str)
 
 
 def run():
@@ -203,5 +251,6 @@ def run():
         "number": args.number,
         "statics_type": args.statics_type,
         "goals": args.goals,
+        "config": args.config,
     }
     start(params)

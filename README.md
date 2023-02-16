@@ -8,40 +8,30 @@
 
 ## 一、数据
 
-|联赛|数据录入|开始赛季|数据更新时间|备注|
-|----|----|----|----|----|
-|英超|✔|1993-1994|2023-02-05|pip包自带|
-|意甲|✔|1993-1994|2023-02-07|通过[微信公众号获取](#七公众号二维码)|
-|西甲|✔|1993-1994|2023-02-06|通过[微信公众号获取](#七公众号二维码)|
-|德甲|✔|1993-1994|2022-02-05|通过[微信公众号获取](#七公众号二维码)|
-|法甲|✔|1993-1994|2023-02-05|通过[微信公众号获取](#七公众号二维码)|
+|联赛|数据更新时间|备注|
+|----|----|----|
+|英超|2023-02-05|pip包自带|
+|意甲|2023-02-07|通过[微信公众号获取](#五据库存储格式)|
+|西甲|2023-02-06|通过[微信公众号获取](#五据库存储格式)|
+|德甲|2022-02-05|通过[微信公众号获取](#五据库存储格式)|
+|法甲|2023-02-05|通过[微信公众号获取](#五据库存储格式)|
 
-**关注公众号：[NextB](#七公众号二维码)，发送私信获取。**
+**关注公众号：[NextB](#五据库存储格式)，发送私信：“足球数据”获取下载链接。**
 
 ## 二、命令行
 
 |功能点|说明|使用示例|
 |----|----|----|
 |nextb-football-init-db|NextB初始化football数据库|`nextb-football-init-db -d $csv_dir`|
-|~~nextb-football-update-db~~|NextB更新football数据库||
-|~~nextb-football-team-report~~|NextB获取指定球队的分析报告，报告格式参考[球队分析报告](#31-球队分析报告格式如下)||
-|~~nextb-football-match-report~~|NextB获取指定两支球队的比赛分析报告，报告格式参考[比赛分析报告](#32-比赛分析报告格式)||
-|~~nextb-football-get-statics-report~~|NextB获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#33-联赛信息格式)||
-|nextb-football-get-last-matchs|NextB获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#33-联赛信息格式)|`nextb-football-get-last-matchs`|
-|~~nextb-football-get-recommend-report~~|NextB获取推荐球队分析报告，报告格式参考[推荐球队报告格式](#34-推荐球队报告格式)||
-|nextb-football-get-team-match|NextB获取指定球队最近N场比赛结果，结果格式参考[球队比赛结果](#35-球队比赛结果)|`nextb-football-get-team-match -n 5`|
+|nextb-football-get-last-matchs|NextB获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#31-联赛信息格式)|`nextb-football-get-last-matchs`|
+|nextb-football-get-team-match|NextB获取指定球队最近N场比赛结果，结果格式参考[球队比赛结果](#32-球队比赛结果)|`nextb-football-get-team-match -n 5`|
 |nextb-football-get-recommend-csv|NextB生成球队推荐csv文件|`nextb-football-get-recommend-csv`|
 |nextb-football-get-recommend-merge-csv|NextB通过穷举法，生成5大联赛球队最佳组合推荐csv文件|`nextb-football-get-recommend-merge-csv`|
 |nextb-football-simulation|NextB基于足球数据的彩票投注仿真程序|`nextb-football-simulation`|
 |||||
 
-## 三、分析结果
-
-### ~~3.1 球队分析报告格式~~
-
-### ~~3.2 比赛分析报告格式~~
-
-### 3.3 联赛信息格式
+## 三、结果输出
+### 3.1 联赛信息格式
 
 ```
 > nextb-football-get-last-matchs.exe
@@ -56,9 +46,7 @@
 |   法甲   | 2022-2023 | 2023/01/11 20:00 |  特鲁瓦  |   马赛   |   0-1    |   0-2    |
 +----------+-----------+------------------+----------+----------+----------+----------+
 ```
-
-### ~~3.4 推荐球队报告格式~~
-### 3.5 球队比赛结果
+### 3.2 球队比赛结果
 
 ```
 > nextb-football-get-team-match.exe -n 5
@@ -73,7 +61,13 @@
 +---------------+--------+----------+----------+----------+
 ```
 
-## 四、据库存储格式
+## 四、公众号二维码
+
+微信扫描二维码，关注公众号
+
+![](./pictures/gongzhonghao.jpg)
+
+## 五、据库存储格式
 
 |字段名称|字段类型|字段说明|
 |----|----|----|
@@ -91,13 +85,3 @@
 |htag|int|半场客队进球, 缺省值为-1|
 |htg|int|半场进球数, 缺省值为-1|
 |htr|str|半场比赛结果, H: 主队胜, A: 客队胜, D: 平局|
-
-## ~~五、微信小程序使用示例~~
-
-## ~~六、小程序二维码~~
-
-## 七、公众号二维码
-
-微信扫描二维码，关注公众号
-
-![](./pictures/gongzhonghao.jpg)

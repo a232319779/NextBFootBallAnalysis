@@ -22,49 +22,8 @@ STATICS_DATA_TYPE = {
     "20": 20,
     "40": 40,
     "50": 50,
-    "80": 80
+    "80": 80,
 }
-
-TEAM_REPORT = """球队名称：{team}
-
-统计类型: {statics_type_str}
-近{number}场比赛进球场次及占比：{match_goals_ratio}
-近{home_number}场比赛主场进球场次及占比：{home_match_goals_rartio}
-近{away_number}场比赛客场进球场次及占比：{away_match_goals_ratio}
-历史比赛场次：{total}
-历史进球场次及占比：{goals_total_ratio}
-主场进球场次及占比：{home_goals_total_ratio}
-客场进球场次及占比：{away_goals_total_ratio}
-历史进球场次间隔: {goals_dist}
-近{xnumber}个赛季场次: {season_total}
-近{xnumber}个赛季进球场次及占比：{season_goals_ratio}
-近{xnumber}个赛季主场进球场次及占比：{home_season_goals_ratio}
-近{xnumber}个赛季客场进球场次及占比：{away_season_goals_ratio}
-近{xnumber}个赛季进球场次间隔: {xnumber_goals_dist}
-"""
-
-MATCH_REPORT = """交战双方: {home_team} vs {away_team}
-统计类型: {statics_type_str}
-双方历史交手场次：{total}
-双方历史进球场次及占比：{goals_total_ratio}
-双方历史比分场次及占比：{score_total_ratio}
-双方近{number}场比赛进球场次及占比：{goals_match_ratio}
-双方近{number}场比赛比分场次及占比：{score_match_ratio}
-"""
-
-STATICS_REPORT = """{div}最后一场比赛信息: 
-\t比赛双方: {teams}
-\t比赛时间: {time}
-\t半场比分: {h_score}
-\t全场比分: {f_score}
-"""
-
-RECOMMEND_REPORT = """联赛名称: {div}
-基于历史比赛结果推荐球队如下:
-{data}
-基于近{number}轮比赛结果推荐球队如下:
-{number_data}
-"""
 
 # 联赛名称映射表
 LEAGUES_MAPPING = {"英超": "E0", "意甲": "I1", "西甲": "SP1", "德甲": "D1", "法甲": "F1"}

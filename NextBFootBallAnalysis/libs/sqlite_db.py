@@ -182,6 +182,33 @@ class NextbFootballSqliteDB:
         else:
             return []
 
+    def get_team_season_matchs(self, team, season):
+        """
+        获取指定球队指定赛季的比赛的结果
+        """
+        data = (
+            self.session_maker.query(NextbFootballDatas)
+            .filter(
+                and_(
+                    or_(
+                        NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.away_team == team,
+                    ),
+                    NextbFootballDatas.season.in_(season),
+                )
+            )
+            .order_by(NextbFootballDatas.date_time.desc())
+            .all()
+        )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            datas.reverse()
+            return datas
+        else:
+            return []
+
     def get_team_last_season_matchs(self, team, number=5):
         """
         获取指定球队最近number个赛季的比赛结果，默认最近5个赛季

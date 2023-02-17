@@ -194,7 +194,7 @@ class NextbFootballSqliteDB:
                         NextbFootballDatas.home_team == team,
                         NextbFootballDatas.away_team == team,
                     ),
-                    NextbFootballDatas.season == season,
+                    NextbFootballDatas.season.in_(season),
                 )
             )
             .order_by(NextbFootballDatas.date_time.desc())

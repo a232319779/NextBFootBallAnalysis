@@ -49,7 +49,7 @@ def parse_cmd():
     parser.add_argument(
         "-f",
         "--func",
-        help="指定统计方法，支持[match: 输出收益随策略开始时间的关系, season: 输出单赛季指定球队的策略收益]",
+        help="指定统计方法，支持[match: 输出收益随策略开始时间的关系, season: 输出指定赛季指定球队的策略收益]",
         type=str,
         dest="function",
         action="store",
@@ -70,10 +70,10 @@ def parse_cmd():
         "-s",
         "--season",
         help="指定赛季名称。默认为2022-2023赛季，赛季格式如：2022-2023。适用于func: season统计方法。",
-        type=str,
+        nargs="+",
         dest="season",
         action="store",
-        default="2022-2023",
+        default=["2022-2023"],
     )
 
     parser.add_argument(
@@ -209,7 +209,6 @@ def simulation_season(datas, goals, statics_type, config):
     odds = config.get("ODDS", {}).get(str(goals), 3.0)
     # 初始资金10元
     amount = initial_amount
-    start_time = ""
     total_profit = 0.0
     for data in datas:
         # [投注时间,投注金额,单次盈利金额,总盈利金额]
@@ -333,11 +332,12 @@ def start(param):
 
 def season(param):
     teams = param.get("teams")
-    season = param.get("season", "2022-2023")
+    season = param.get("season", ["2022-2023"])
     statics_type = param.get("statics_type")
     goals = param.get("goals")
     config_name = param.get("config")
     config = read_config(config_name)
+    max_costs = config.get("MAX_COSTS", 10240)
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     statics_type_str = "半场进球"
@@ -360,8 +360,9 @@ def season(param):
             out_datas[goal].extend(s_data)
 
         goals_str = "+".join(goals)
+        season_str = "+".join(season)
         file_name = "{}_{}_{}_{}_flourish.csv".format(
-            t, statics_type_str, season, goals_str
+            t, statics_type_str, season_str, goals_str
         )
         flourish_headers = "标签,{}\n".format(
             ",".join([str(p[0]) for p in out_datas[goal]])
@@ -375,7 +376,7 @@ def season(param):
                     continue
                 costs_int_data = [p[1] for p in out_datas[goal]]
                 # 单次投入超过1万的，直接过滤掉
-                if max(costs_int_data) > 10240:
+                if max(costs_int_data) > max_costs:
                     continue
                 costs_data = [str(p) for p in costs_int_data]
                 # profits_data = [str(p[2]) for p in out_datas[goal]]

@@ -224,7 +224,7 @@ CLUB_NAME_MAPPING = {
     "萨拉戈萨": "Zaragoza",
     # 德甲
     "亚琛": "Aachen",
-    "奧格斯堡": "Augsburg",
+    "奥格斯堡": "Augsburg",
     "拜仁慕尼黑": "Bayern Munich",
     "比勒费尔德": "Bielefeld",
     "波鸿": "Bochum",

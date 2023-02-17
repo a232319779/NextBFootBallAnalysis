@@ -46,16 +46,36 @@ def parse_cmd():
         action="store",
         default=["阿森纳"],
     )
+    parser.add_argument(
+        "-f",
+        "--func",
+        help="指定统计方法，支持[match: 输出收益随策略开始时间的关系, season: 输出单赛季指定球队的策略收益]",
+        type=str,
+        dest="function",
+        action="store",
+        default="match",
+    )
 
     parser.add_argument(
         "-n",
         "--number",
-        help="指定最近的比赛场次数量。默认最近500场比赛。",
+        help="指定最近的比赛场次数量。默认最近500场比赛。适用于func: match统计方法。",
         type=int,
         dest="number",
         action="store",
         default=500,
     )
+
+    parser.add_argument(
+        "-s",
+        "--season",
+        help="指定赛季名称。默认为2022-2023赛季，赛季格式如：2022-2023。适用于func: season统计方法。",
+        type=str,
+        dest="season",
+        action="store",
+        default="2022-2023",
+    )
+
     parser.add_argument(
         "-st",
         "--statics_type",
@@ -181,6 +201,56 @@ def simulation(datas, goals, statics_type, config):
     ]
 
 
+def simulation_season(datas, goals, statics_type, config):
+    statics_datas = list()
+    initial_amount = config.get("INITIAL_AMOUNT")
+    multiple = config.get("MULTIPLE")
+    threshold = config.get("THRESHOLD")
+    odds = config.get("ODDS", {}).get(str(goals), 3.0)
+    # 初始资金10元
+    amount = initial_amount
+    start_time = ""
+    total_profit = 0.0
+    for data in datas:
+        # [投注时间,投注金额,单次盈利金额,总盈利金额]
+        statics_data = list()
+        if STATICS_TYPE_FULL == statics_type:
+            tg = data.ftg
+        else:
+            tg = data.htg
+        if tg < 0:
+            continue
+        statics_data.append(data.date_time.strftime("%Y-%m-%d"))
+        # 超过7球的，统一记为7球
+        if tg > 7:
+            tg = 7
+        # 输
+        if goals != tg:
+            statics_data.append(amount)
+            statics_data.append(-amount)
+            total_profit += -amount
+            statics_data.append(total_profit)
+            amount = amount * multiple
+        # 赢
+        else:
+            # 计算本次盈利
+            total_profit += amount * odds - amount
+            # 如果投注金额小于等于THRESHOLD，继续倍投
+            if amount <= threshold:
+                statics_data.append(amount)
+                statics_data.append(amount * odds - amount)
+                amount = amount * multiple
+            else:
+                statics_data.append(amount)
+                statics_data.append(amount * odds - amount)
+                amount = initial_amount
+            # 添加到末尾
+            statics_data.append(total_profit)
+        statics_datas.append(statics_data)
+
+    return statics_datas
+
+
 def start(param):
     teams = param.get("teams")
     number = param.get("number")
@@ -251,10 +321,78 @@ def start(param):
                 # 只记录[0,7]区间内的值
                 if goal > 7 or goal < 0:
                     continue
-                costs_data_str = "{}球最大投入金额,{}\n".format(goal, ",".join(costs_data[goal]))
-                profits_data_str = "{}球盈利金额,{}\n".format(goal, ",".join(profits_data[goal]))
+                costs_data_str = "{}球最大投入金额,{}\n".format(
+                    goal, ",".join(costs_data[goal])
+                )
+                profits_data_str = "{}球盈利金额,{}\n".format(
+                    goal, ",".join(profits_data[goal])
+                )
                 f.write(costs_data_str)
                 f.write(profits_data_str)
+
+
+def season(param):
+    teams = param.get("teams")
+    season = param.get("season", "2022-2023")
+    statics_type = param.get("statics_type")
+    goals = param.get("goals")
+    config_name = param.get("config")
+    config = read_config(config_name)
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    statics_type_str = "半场进球"
+    if statics_type == STATICS_TYPE_FULL:
+        statics_type_str = "全场进球"
+    for t in tqdm(teams, unit="team", desc="NextBFootBall投注仿真计算中"):
+        english_team = CLUB_NAME_MAPPING.get(t, t)
+        datas = nfs.get_team_season_matchs(team=english_team, season=season)
+        out_datas = dict()
+        for goal in goals:
+            goal = int(goal)
+            # 过滤非正常比分
+            if goal < 0:
+                continue
+            if goal not in out_datas.keys():
+                out_datas[goal] = list()
+            s_data = simulation_season(
+                datas=datas, goals=goal, statics_type=statics_type, config=config
+            )
+            out_datas[goal].extend(s_data)
+
+        goals_str = "+".join(goals)
+        file_name = "{}_{}_{}_{}_flourish.csv".format(
+            t, statics_type_str, season, goals_str
+        )
+        flourish_headers = "标签,{}\n".format(
+            ",".join([str(p[0]) for p in out_datas[goal]])
+        )
+        with open(file_name, "w", encoding="utf8") as f:
+            f.write(flourish_headers)
+            for goal in goals:
+                goal = int(goal)
+                # 只记录[0,7]区间内的值
+                if goal > 7 or goal < 0:
+                    continue
+                costs_int_data = [p[1] for p in out_datas[goal]]
+                # 单次投入超过1万的，直接过滤掉
+                if max(costs_int_data) > 10240:
+                    continue
+                costs_data = [str(p) for p in costs_int_data]
+                # profits_data = [str(p[2]) for p in out_datas[goal]]
+                profits_total_data = [str(p[3]) for p in out_datas[goal]]
+                costs_data_str = "{}球投入金额,{}\n".format(goal, ",".join(costs_data))
+                # profits_data_str = "{}球单次盈利金额,{}\n".format(goal, ",".join(profits_data))
+                profits_total_data_str = "{}球总盈利金额,{}\n".format(
+                    goal, ",".join(profits_total_data)
+                )
+                f.write(costs_data_str)
+                # f.write(profits_data_str)
+                f.write(profits_total_data_str)
+    nfs.close_session()
+    nfs.close()
+
+
+func = {"match": start, "season": season}
 
 
 def run():
@@ -268,5 +406,6 @@ def run():
         "statics_type": args.statics_type,
         "goals": args.goals,
         "config": args.config,
+        "season": args.season,
     }
-    start(params)
+    func[args.function](params)

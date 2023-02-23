@@ -1,36 +1,36 @@
-# NextB足球数据分析
+# NextB 足球数据分析
 
 ## 安装
 
 安装命令：`pip install NextBFootBallAnalysis`
 
-**pip包中仅包含英超数据库文件，数据更新至2023-02-05**
+**pip 包中仅包含英超数据库文件，数据更新至 2023-02-19**
 
 ## 一、数据
 
-|联赛|数据更新时间|备注|
-|----|----|----|
-|英超|2023-02-05|pip包自带|
-|意甲|2023-02-07|通过[微信公众号获取](#四公众号二维码)|
-|西甲|2023-02-06|通过[微信公众号获取](#四公众号二维码)|
-|德甲|2022-02-05|通过[微信公众号获取](#四公众号二维码)|
-|法甲|2023-02-05|通过[微信公众号获取](#四公众号二维码)|
+| 联赛 | 数据更新时间 | 备注                                  |
+| ---- | ------------ | ------------------------------------- |
+| 英超 | 2023-02-19   | pip 包自带                            |
+| 意甲 | 2023-02-19   | 通过[微信公众号获取](#四公众号二维码) |
+| 西甲 | 2023-02-19   | 通过[微信公众号获取](#四公众号二维码) |
+| 德甲 | 2022-02-19   | 通过[微信公众号获取](#四公众号二维码) |
+| 法甲 | 2023-02-19   | 通过[微信公众号获取](#四公众号二维码) |
 
 **关注公众号：[NextB](#四公众号二维码)，发送私信：“足球数据”获取下载链接。**
 
 ## 二、命令行
 
-|功能点|说明|使用示例|
-|----|----|----|
-|nextb-football-init-db|NextB初始化football数据库|`nextb-football-init-db -d $csv_dir`|
-|nextb-football-get-last-matchs|NextB获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#31-联赛信息格式)|`nextb-football-get-last-matchs`|
-|nextb-football-get-team-match|NextB获取指定球队最近N场比赛结果，结果格式参考[球队比赛结果](#32-球队比赛结果)|`nextb-football-get-team-match -n 5`|
-|nextb-football-get-recommend-csv|NextB生成球队推荐csv文件|`nextb-football-get-recommend-csv`|
-|nextb-football-get-recommend-merge-csv|NextB通过穷举法，生成5大联赛球队最佳组合推荐csv文件|`nextb-football-get-recommend-merge-csv`|
-|nextb-football-simulation|NextB基于足球数据的彩票投注仿真程序|`nextb-football-simulation`|
-|||||
+| 功能点                                 | 说明                                                                              | 使用示例                                 |
+| -------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------- |
+| nextb-football-init-db                 | NextB 初始化 football 数据库                                                      | `nextb-football-init-db -d $csv_dir`     |
+| nextb-football-get-last-matchs         | NextB 获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#31-联赛信息格式)      | `nextb-football-get-last-matchs`         |
+| nextb-football-get-team-match          | NextB 获取指定球队最近 N 场比赛结果，结果格式参考[球队比赛结果](#32-球队比赛结果) | `nextb-football-get-team-match -n 5`     |
+| nextb-football-get-recommend-csv       | NextB 生成球队推荐 csv 文件                                                       | `nextb-football-get-recommend-csv`       |
+| nextb-football-get-recommend-merge-csv | NextB 通过穷举法，生成 5 大联赛球队最佳组合推荐 csv 文件                          | `nextb-football-get-recommend-merge-csv` |
+| nextb-football-simulation              | NextB 基于足球数据的彩票投注仿真程序，结果参考[投注仿真](#六投注仿真)             | `nextb-football-simulation`              |
 
 ## 三、结果输出
+
 ### 3.1 联赛信息格式
 
 ```
@@ -46,6 +46,7 @@
 |   法甲   | 2022-2023 | 2023/01/11 20:00 |  特鲁瓦  |   马赛   |   0-1    |   0-2    |
 +----------+-----------+------------------+----------+----------+----------+----------+
 ```
+
 ### 3.2 球队比赛结果
 
 ```
@@ -69,19 +70,54 @@
 
 ## 五、据库存储格式
 
-|字段名称|字段类型|字段说明|
-|----|----|----|
-|id|int|记录ID, 主键, 自增|
-|div|str|联赛名称, E0: 英超|
-|season|str|赛季, 如: 2022-2023|
-|date_time|datetime|比赛时间|
-|home_team|str|主队名称|
-|away_team|str|客队名称|
-|fthg|int|全场主队进球|
-|ftag|int|全场客队进球|
-|ftg|int|全场进球数|
-|ftr|str|全场比赛结果, H: 主队胜, A: 客队胜, D: 平局|
-|hthg|int|半场主队进球, 缺省值为-1|
-|htag|int|半场客队进球, 缺省值为-1|
-|htg|int|半场进球数, 缺省值为-1|
-|htr|str|半场比赛结果, H: 主队胜, A: 客队胜, D: 平局|
+| 字段名称  | 字段类型 | 字段说明                                    |
+| --------- | -------- | ------------------------------------------- |
+| id        | int      | 记录 ID, 主键, 自增                         |
+| div       | str      | 联赛名称, E0: 英超                          |
+| season    | str      | 赛季, 如: 2022-2023                         |
+| date_time | datetime | 比赛时间                                    |
+| home_team | str      | 主队名称                                    |
+| away_team | str      | 客队名称                                    |
+| fthg      | int      | 全场主队进球                                |
+| ftag      | int      | 全场客队进球                                |
+| ftg       | int      | 全场进球数                                  |
+| ftr       | str      | 全场比赛结果, H: 主队胜, A: 客队胜, D: 平局 |
+| hthg      | int      | 半场主队进球, 缺省值为-1                    |
+| htag      | int      | 半场客队进球, 缺省值为-1                    |
+| htg       | int      | 半场进球数, 缺省值为-1                      |
+| htr       | str      | 半场比赛结果, H: 主队胜, A: 客队胜, D: 平局 |
+
+## 六、投注仿真
+
+### 6.1 进球倍投策略仿真收益
+
+通过倍投法投注体育彩票进球数，结合历史数据进行仿真回测，评估收益情况。按赛季仿真抽样结果如下：
+
+| 赛季      | 进球数 | 单次最大投入 | 最大收益 |
+| --------- | ------ | ------------ | -------- |
+| 2022-2023 | 0      | 5120         | 39020    |
+| 2022-2023 | 3      | 1280         | 1396     |
+| 2022-2023 | 4      | 2560         | 17465    |
+| 2021-2022 | 1      | 5120         | 17045    |
+| 2021-2022 | 2      | 10240        | 15345    |
+| 2020-2021 | 2      | 2560         | 6812     |
+| 2020-2021 | 3      | 2560         | 9005     |
+| 2020-2021 | 4      | 2560         | 16380    |
+
+#### 6.1.1 米兰 2022-2023 赛季仿真结果
+
+![milan2023](./pictures/milan2023.png)
+
+[动态图链接](https://public.flourish.studio/visualisation/12772883/)
+
+#### 6.1.2 米兰 2021-2022 赛季仿真结果
+
+![milan2022](./pictures/milan2022.png)
+
+[动态图链接](https://public.flourish.studio/visualisation/12772833/)
+
+#### 6.1.3 米兰 2020-2021 赛季仿真结果
+
+![milan2021](./pictures/milan2021.png)
+
+[动态图链接](https://public.flourish.studio/visualisation/12772865/)

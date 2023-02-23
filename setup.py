@@ -54,13 +54,9 @@ do_setup(
     entry_points={
         "console_scripts": [
             "nextb-football-init-db = NextBFootBallAnalysis.cli.cli_init_football_db:run",
-            "nextb-football-update-db = NextBFootBallAnalysis.cli.cli_update_football_db:run",
-            "nextb-football-get-team-report = NextBFootBallAnalysis.cli.cli_get_team_report:run",
-            "nextb-football-get-match-report = NextBFootBallAnalysis.cli.cli_get_match_report:run",
-            "nextb-football-get-statics-report = NextBFootBallAnalysis.cli.cli_get_statics_report:run",
-            "nextb-football-get-recommend-report = NextBFootBallAnalysis.cli.cli_get_recommend_report:run",
-            "nextb-football-get-recommend-csv = NextBFootBallAnalysis.cli.cli_get_recommend_csv:run",
+            "nextb-football-get-last-matchs = NextBFootBallAnalysis.cli.cli_get_last_matchs:run",
             "nextb-football-get-team-match = NextBFootBallAnalysis.cli.cli_get_team_match:run",
+            "nextb-football-get-recommend-csv = NextBFootBallAnalysis.cli.cli_get_recommend_csv:run",
             "nextb-football-get-recommend-merge-csv = NextBFootBallAnalysis.cli.cli_get_recommend_merge_csv:run",
             "nextb-football-simulation = NextBFootBallAnalysis.cli.cli_simulation:run",
         ],
@@ -74,5 +70,5 @@ do_setup(
     keywords=[],
     license="MIT",
     include_package_data=True,
-    install_requires=["sqlalchemy==1.4.31", "prettytable==3.6.0"],
+    install_requires=["sqlalchemy==1.4.31", "prettytable==3.6.0", "tqdm==4.62.3"],
 )

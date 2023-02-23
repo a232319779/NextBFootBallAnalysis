@@ -11,5 +11,6 @@
   },
   "INITIAL_AMOUNT": 10,
   "MULTIPLE": 2.0,
-  "THRESHOLD": 40
+  "THRESHOLD": 40,
+  "MAX_COSTS": 10240
 }

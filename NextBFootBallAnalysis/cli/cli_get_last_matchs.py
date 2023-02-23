@@ -2,7 +2,7 @@
 # @Time     : 2023/01/11 10:11:56
 # @Author   : ddvv
 # @Site     : https://ddvvmmzz.github.io
-# @File     : cli_get_statics_report.py
+# @File     : cli_get_last_matchs.py
 # @Software : Visual Studio Code
 # @WeChat   : NextB
 
@@ -10,7 +10,7 @@
 import argparse
 from prettytable import PrettyTable
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
-from NextBFootBallAnalysis.libs.common import get_statics_report
+from NextBFootBallAnalysis.libs.common import get_last_matchs
 
 
 def parse_cmd():
@@ -43,7 +43,7 @@ def run():
     """
     args = parse_cmd()
     param = {"league": args.league}
-    datas = get_statics_report(param)
+    datas = get_last_matchs(param)
     x = PrettyTable()
     x.field_names = ["联赛名称", "赛季", "比赛时间", "主队", "客队", "半场比分", "全场比分"]
     x.add_rows(datas)

@@ -11,6 +11,7 @@ import argparse
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
 from NextBFootBallAnalysis.libs.strategy.strategy_one import strategy_one
 from NextBFootBallAnalysis.libs.strategy.strategy_two import strategy_two
+from NextBFootBallAnalysis.libs.strategy.strategy_three import strategy_three
 
 
 __doc__ = """
@@ -39,7 +40,7 @@ def parse_cmd():
     parser.add_argument(
         "-f",
         "--func",
-        help="指定统计方法，支持[one: 输出收益随策略开始时间的关系, two: 输出指定赛季指定球队的策略收益]",
+        help="指定统计方法，支持[one: 输出收益随策略开始时间的关系, two: 输出指定赛季指定球队的策略收益, three: 输出组合结果]",
         type=str,
         dest="function",
         action="store",
@@ -99,7 +100,7 @@ def parse_cmd():
     return args
 
 
-func = {"one": strategy_one, "two": strategy_two}
+func = {"one": strategy_one, "two": strategy_two, "three": strategy_three}
 
 
 def run():

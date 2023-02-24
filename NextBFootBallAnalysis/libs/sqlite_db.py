@@ -182,7 +182,7 @@ class NextbFootballSqliteDB:
         else:
             return []
 
-    def get_team_season_matchs(self, team, season):
+    def get_team_season_matchs(self, teams, season):
         """
         获取指定球队指定赛季的比赛的结果
         """
@@ -191,20 +191,19 @@ class NextbFootballSqliteDB:
             .filter(
                 and_(
                     or_(
-                        NextbFootballDatas.home_team == team,
-                        NextbFootballDatas.away_team == team,
+                        NextbFootballDatas.home_team.in_(teams),
+                        NextbFootballDatas.away_team.in_(teams),
                     ),
                     NextbFootballDatas.season.in_(season),
                 )
             )
-            .order_by(NextbFootballDatas.date_time.desc())
+            .order_by(NextbFootballDatas.date_time.asc())
             .all()
         )
         if len(data) > 0:
             datas = list()
             for d in data:
                 datas.append(d)
-            datas.reverse()
             return datas
         else:
             return []

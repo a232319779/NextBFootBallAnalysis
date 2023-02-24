@@ -92,7 +92,7 @@ def strategy_two(param):
     if statics_type == STATICS_TYPE_FULL:
         statics_type_str = "全场进球"
     for t in tqdm(teams, unit="team", desc="NextBFootBall投注仿真计算中"):
-        english_team = CLUB_NAME_MAPPING.get(t, t)
+        english_team = [CLUB_NAME_MAPPING.get(t, t)]
         datas = nfs.get_team_season_matchs(team=english_team, season=season)
         out_datas = dict()
         for goal in goals:

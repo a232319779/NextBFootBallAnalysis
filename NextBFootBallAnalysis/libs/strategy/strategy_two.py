@@ -156,13 +156,13 @@ def write__flourish(
             # 单次投入超过1万的，直接过滤掉
             if max(costs_int_data) > max_costs:
                 continue
-            costs_data = [str(p) for p in costs_int_data]
+            # costs_data = [str(p) for p in costs_int_data]
             profits_total_data = [str(p[4]) for p in out_datas[goal]]
-            costs_data_str = "{}球投入金额,{}\n".format(goal, ",".join(costs_data))
+            # costs_data_str = "{}球投入金额,{}\n".format(goal, ",".join(costs_data))
             profits_total_data_str = "{}球总盈利金额,{}\n".format(
                 goal, ",".join(profits_total_data)
             )
-            f.write(costs_data_str)
+            # f.write(costs_data_str)
             f.write(profits_total_data_str)
 
 

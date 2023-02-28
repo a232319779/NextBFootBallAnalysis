@@ -26,7 +26,6 @@
 | nextb-football-get-last-matchs         | NextB 获取联赛最后一场比赛数据，报告格式参考[联赛信息格式](#31-联赛信息格式)      | `nextb-football-get-last-matchs`         |
 | nextb-football-get-team-match          | NextB 获取指定球队最近 N 场比赛结果，结果格式参考[球队比赛结果](#32-球队比赛结果) | `nextb-football-get-team-match -n 5`     |
 | nextb-football-get-recommend-csv       | NextB 生成球队推荐 csv 文件                                                       | `nextb-football-get-recommend-csv`       |
-| nextb-football-get-recommend-merge-csv | NextB 通过穷举法，生成 5 大联赛球队最佳组合推荐 csv 文件                          | `nextb-football-get-recommend-merge-csv` |
 | nextb-football-simulation              | NextB 基于足球数据的彩票投注仿真程序，结果参考[投注仿真](#六投注仿真)             | `nextb-football-simulation`              |
 
 ## 三、结果输出

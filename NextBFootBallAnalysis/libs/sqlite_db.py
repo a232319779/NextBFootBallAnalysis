@@ -7,7 +7,16 @@
 # @WeChat   : NextB
 
 import os
-from sqlalchemy import create_engine, Column, String, BigInteger, or_, and_, distinct
+from sqlalchemy import (
+    create_engine,
+    Column,
+    String,
+    BigInteger,
+    or_,
+    and_,
+    distinct,
+    func,
+)
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.sqltypes import DateTime, Integer
@@ -129,6 +138,31 @@ class NextbFootballSqliteDB:
             for d in data:
                 datas.append(d)
             datas.reverse()
+            return datas
+        else:
+            return []
+
+    def get_team_goals_group_by(self, team, seasons):
+        data = (
+            self.session_maker.query(
+                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+            )
+            .filter(
+                and_(
+                    or_(
+                        NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.away_team == team,
+                    ),
+                    NextbFootballDatas.season.in_(seasons),
+                )
+            )
+            .group_by(NextbFootballDatas.ftg)
+            .all()
+        )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
             return datas
         else:
             return []

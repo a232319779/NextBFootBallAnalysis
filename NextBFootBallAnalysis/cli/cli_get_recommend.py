@@ -32,15 +32,6 @@ def parse_cmd():
         default="2022-2023",
     )
     parser.add_argument(
-        "-n",
-        "--number",
-        help="指定总场次数量。默认300场。",
-        type=int,
-        dest="number",
-        action="store",
-        default=300,
-    )
-    parser.add_argument(
         "-g",
         "--goals",
         help="指定进球数量，可选值包括[0,1,2,3,4,5,6,7]，自动忽略其他值默认为：2球",
@@ -60,18 +51,18 @@ def run():
     CLI命令行入口
     """
     args = parse_cmd()
-    param = {"season": args.season, "goals": args.goals, "number": args.number}
-    datas, last_n_seasons = get_recommend(param)
+    param = {"season": args.season, "goals": args.goals}
+    datas = get_recommend(param)
     x = PrettyTable()
     x.field_names = [
         "联赛名称",
         "球队名称",
-        "总场次",
-        "进{}球场次".format(args.goals),
-        "总占比",
-        "{}赛季".format(last_n_seasons[0]),
-        "{}赛季".format(last_n_seasons[1]),
-        "{}赛季".format(last_n_seasons[2]),
+        "联赛{}球占比".format(args.goals),
+        "比赛场次",
+        "球队{}球占比".format(args.goals),
+        "{}".format(args.season),
+        "占比方差",
     ]
-    x.add_rows(datas)
+    for _, data in datas.items():
+        x.add_rows(data)
     print(x)

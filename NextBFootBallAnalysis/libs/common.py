@@ -7,11 +7,10 @@
 # @WeChat   : NextB
 
 import os
-import copy
 import datetime
 from tqdm import tqdm
 from collections import Counter
-from statistics import mean, median
+from statistics import mean, median, variance
 from dateutil.relativedelta import relativedelta
 from NextBFootBallAnalysis.libs.sqlite_db import NextbFootballSqliteDB
 from NextBFootBallAnalysis.libs.constant import (
@@ -267,25 +266,30 @@ def get_last_matchs(param):
 
 
 def get_recommend(param):
-    def get_dist_datas(ct, seasons):
-        # 获取分布统计
-        team_group_data = nfs.get_team_goals_group_by(ct, seasons)
-        count_sum = sum([p[1] for p in team_group_data])
-        statics_list = [0, 0, 0]
-        for tgd in team_group_data:
-            if goals == tgd[0]:
-                count = tgd[1]
-                ratio = round(count / count_sum, 3)
-                statics_list[0] = count_sum
-                statics_list[1] = count
-                statics_list[2] = ratio
-                break
-        return statics_list
+    """
+    推荐原理：
+    计算每支球队，每个赛季的进球占比，计算占比方差，选择占比最大，方差最小的前3支球队
+    headers: 联赛名称,球队名称,联赛N球占比,比赛场次,球队N球占比,赛季占比,占比方差
+    """
+
+    def calc_variance(ct, seasons):
+        ratio_list = list()
+        for s in seasons:
+            # 获取分布统计
+            team_group_data = nfs.get_team_goals_group_by(ct, [s])
+            count_sum = sum([p[1] for p in team_group_data])
+            ratio = 0.0
+            for tgd in team_group_data:
+                if goals == tgd[0]:
+                    count = tgd[1]
+                    ratio = round(count / count_sum, 3)
+                    break
+            ratio_list.append(ratio)
+        return variance(ratio_list)
 
     goals = param.get("goals", 2)
     season = param.get("season", "2022-2023")
-    number = param.get("number", 300)
-    # 转换为中文名称
+    # 球队转换为中文名称
     CLUB_NAME_MAPPING_TRANSFER = dict(
         zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
     )
@@ -294,33 +298,60 @@ def get_recommend(param):
     nfs.create_session()
     # 构造全赛季列表
     all_seasons = nfs.create_season_list(season, 30)
-    # 构造近3个赛季列表
-    last_n_seasons = nfs.create_season_list(season, 3)
-    datas = list()
-    for name, div in LEAGUES_MAPPING.items():
+    datas = dict()
+    for name, div in tqdm(LEAGUES_MAPPING.items(), unit="联赛", desc="联赛计算中"):
+        if div not in datas.keys():
+            datas[div] = list()
         # 获取指定联赛指定赛季参赛球队
         current_teams = nfs.get_season_teams(div, season)
         if len(current_teams) == 0:
             continue
-        choose_team = None
+        # 计算联赛N进球占比
+        div_goals = nfs.get_div_goals_group_by(div, all_seasons)
+        div_goals_sum = sum([p[1] for p in div_goals])
+        div_goals_ratio = 0.0
+        for dg in div_goals:
+            if goals == dg[0]:
+                count = dg[1]
+                div_goals_ratio = round(count / div_goals_sum, 3)
         # 按联赛球队统计数据
-        for ct in current_teams:
+        for ct in tqdm(current_teams, unit="球队", desc="球队计算中"):
+            # 球队总进球占比
+            team_goals = nfs.get_team_goals_group_by(ct, all_seasons)
+            team_goals_sum = sum([p[1] for p in team_goals])
+            team_goals_ratio = 0.0
+            for dg in team_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    team_goals_ratio = round(count / team_goals_sum, 3)
+            # 球队占比低于历史占比，则不要
+            if team_goals_ratio - div_goals_ratio <= 0:
+                continue
+            # 球队当前赛季进球占比
+            team_season_goals = nfs.get_team_goals_group_by(ct, [all_seasons[-1]])
+            team_season_goals_sum = sum([p[1] for p in team_season_goals])
+            team_season_goals_ratio = 0.0
+            for dg in team_season_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    team_season_goals_ratio = round(count / team_season_goals_sum, 3)
+            # 计算方差
+            t_variance = round(calc_variance(ct, all_seasons), 4)
             team_datas = list()
             team_datas.append(name)
             team_datas.append(CLUB_NAME_MAPPING_TRANSFER.get(ct, ct))
-            team_datas.extend(get_dist_datas(ct, all_seasons))
-            # 过滤参赛场数太小的
-            if team_datas[2] < number:
-                continue
-            # 找占比最高的球队
-            if choose_team is None or choose_team[4] < team_datas[4]:
-                for s in last_n_seasons:
-                    team_datas.append(get_dist_datas(ct, [s])[2])
-                choose_team = copy.deepcopy(team_datas)
-        datas.append(choose_team)
+            team_datas.append(div_goals_ratio)
+            team_datas.append(team_goals_sum)
+            team_datas.append(team_goals_ratio)
+            team_datas.append(team_season_goals_ratio)
+            team_datas.append(t_variance)
+            datas[div].append(team_datas)
+        datas[div].sort(key=lambda x: x[6])
+        # 只要筛选出来的前3个
+        datas[div] = datas[div][:3]
     nfs.close_session()
     nfs.close()
-    return datas, last_n_seasons
+    return datas
 
 
 def get_team_match(param):

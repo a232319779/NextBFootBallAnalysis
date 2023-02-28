@@ -114,8 +114,10 @@ class NextbFootballSqliteDB:
         seasons = list()
         year = int(current_season.split("-")[0])
         for i in range(-number + 1, 0):
-            seasons.append("{}-{}".format(year + i, year + i + 1))
-        seasons.append(current_season)
+            # 数据最早只能到1993赛季
+            if year + i >= 1993:
+                seasons.append("{}-{}".format(year + i, year + i + 1))
+                seasons.append(current_season)
         return seasons
 
     def get_team_last_matchs(self, team, number=10):
@@ -138,6 +140,28 @@ class NextbFootballSqliteDB:
             for d in data:
                 datas.append(d)
             datas.reverse()
+            return datas
+        else:
+            return []
+
+    def get_div_goals_group_by(self, div, seasons):
+        data = (
+            self.session_maker.query(
+                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+            )
+            .filter(
+                and_(
+                    NextbFootballDatas.div == div,
+                    NextbFootballDatas.season.in_(seasons),
+                )
+            )
+            .group_by(NextbFootballDatas.ftg)
+            .all()
+        )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
             return datas
         else:
             return []

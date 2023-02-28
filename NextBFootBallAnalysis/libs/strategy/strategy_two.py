@@ -127,15 +127,12 @@ def write_csv(teams_str, statics_type_str, season_str, goals, max_costs, out_dat
             if goal > 7 or goal < 0:
                 continue
             for od in out_datas[goal]:
-                # 总投入超过1万的，直接过滤掉
-                if od[3] > max_costs:
-                    continue
                 tmp = [od[0], str(goal), str(od[1]), str(od[3]), str(od[4])]
                 f.write(",".join(tmp))
                 f.write("\n")
 
 
-def write__flourish(
+def write_flourish(
     teams_str, statics_type_str, season_str, goals, max_costs, out_datas
 ):
     goals_str = "+".join(goals)
@@ -204,9 +201,7 @@ def strategy_two(param):
     teams_str = "+".join(teams)
     season_str = "+".join(season)
     # 输出为flourish格式的csv
-    write__flourish(
-        teams_str, statics_type_str, season_str, goals, max_costs, out_datas
-    )
+    write_flourish(teams_str, statics_type_str, season_str, goals, max_costs, out_datas)
     # 输出为普通csv格式
     write_csv(teams_str, statics_type_str, season_str, goals, max_costs, out_datas)
     nfs.close_session()

@@ -190,6 +190,50 @@ class NextbFootballSqliteDB:
             return datas
         else:
             return []
+        
+    def get_home_team_goals_group_by(self, team, seasons):
+        data = (
+            self.session_maker.query(
+                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+            )
+            .filter(
+                and_(
+                    NextbFootballDatas.home_team == team,
+                    NextbFootballDatas.season.in_(seasons),
+                )
+            )
+            .group_by(NextbFootballDatas.ftg)
+            .all()
+        )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+        
+    def get_away_team_goals_group_by(self, team, seasons):
+        data = (
+            self.session_maker.query(
+                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+            )
+            .filter(
+                and_(
+                    NextbFootballDatas.away_team == team,
+                    NextbFootballDatas.season.in_(seasons),
+                )
+            )
+            .group_by(NextbFootballDatas.ftg)
+            .all()
+        )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
 
     def get_last_matchs(self, home_team, away_team, number=10):
         """

@@ -327,6 +327,22 @@ def get_recommend(param):
             # 球队占比低于历史占比，则不要
             if team_goals_ratio - div_goals_ratio <= 0:
                 continue
+            # 计算主场进球占比
+            home_goals = nfs.get_home_team_goals_group_by(ct, all_seasons[-3:])
+            home_goals_sum = sum([p[1] for p in home_goals])
+            home_goals_ratio = 0.0
+            for dg in home_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    home_goals_ratio = round(count / home_goals_sum, 3)
+            # 计算客场进球占比
+            away_goals = nfs.get_away_team_goals_group_by(ct, all_seasons[-3:])
+            away_goals_sum = sum([p[1] for p in away_goals])
+            away_goals_ratio = 0.0
+            for dg in away_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    away_goals_ratio = round(count / away_goals_sum, 3)
             # 球队当前赛季进球占比
             team_season_goals = nfs.get_team_goals_group_by(ct, [all_seasons[-1]])
             team_season_goals_sum = sum([p[1] for p in team_season_goals])
@@ -343,10 +359,12 @@ def get_recommend(param):
             team_datas.append(div_goals_ratio)
             team_datas.append(team_goals_sum)
             team_datas.append(team_goals_ratio)
+            team_datas.append(home_goals_ratio)
+            team_datas.append(away_goals_ratio)
             team_datas.append(team_season_goals_ratio)
             team_datas.append(t_variance)
             datas[div].append(team_datas)
-        datas[div].sort(key=lambda x: x[6])
+        datas[div].sort(key=lambda x: x[8])
         # 只要筛选出来的前3个
         datas[div] = datas[div][:3]
     nfs.close_session()

@@ -372,7 +372,7 @@ def get_recommend(param):
     return datas
 
 
-def get_team_match(param):
+def get_team(param):
     team_ori = param.get("team")
     team = CLUB_NAME_MAPPING.get(team_ori, team_ori)
     # 转换为中文名称
@@ -393,4 +393,59 @@ def get_team_match(param):
         tmp.append("{}-{}".format(m.fthg, m.ftag))
         datas.append(tmp)
     datas.reverse()
+    return datas
+
+def get_match(param):
+    teams = param.get("teams")
+    home_team_ori = teams[0]
+    away_team_ori = teams[1]
+    season = param.get("season")
+    home_team = CLUB_NAME_MAPPING.get(home_team_ori, home_team_ori)
+    away_team = CLUB_NAME_MAPPING.get(away_team_ori, away_team_ori)
+    # 转换为中文名称
+    CLUB_NAME_MAPPING_TRANSFER = dict(
+        zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
+    )
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    datas = list()
+    # 构造全赛季列表
+    all_seasons = nfs.create_season_list(season, 30)
+    # 历史比赛记录
+    match_datas_1 = nfs.get_team_match_goals_group_by(hteam=home_team, ateam=away_team, seasons=all_seasons)
+    match_datas_2 = nfs.get_team_match_goals_group_by(hteam=away_team, ateam=home_team, seasons=all_seasons)
+    # 统计进球数
+    for goal in range(0, 20):
+        d1 = 0
+        d2 = 0
+        total = 0
+        data = list()
+        for md1 in match_datas_1:
+            if md1[0] == goal:
+                d1 = md1[1]
+                break
+        for md2 in match_datas_2:
+            if md2[0] == goal:
+                d2 = md2[1]
+                break
+        total = d1 + d2
+        if total == 0:
+            continue
+        m = nfs.get_last_goal_match(home_team, away_team, goal)
+        data.append(goal)
+        data.append(total)
+        data.append(d1)
+        data.append(d2)
+        if m:
+            data.append(m.date_time.strftime("%Y/%m/%d %H:%M"))
+        else:
+            data.append("未出现过该进球数")
+        if m.fthg > m.ftag:
+            data.append("{}（主胜）".format(CLUB_NAME_MAPPING_TRANSFER.get(m.home_team)))
+        elif m.fthg < m.ftag:
+            data.append("{}（客胜）".format(CLUB_NAME_MAPPING_TRANSFER.get(m.away_team)))
+        else:
+            data.append("平局")
+        datas.append(data)
+    datas.sort(key=lambda x: x[1], reverse=True)
     return datas

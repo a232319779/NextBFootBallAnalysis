@@ -55,7 +55,8 @@ do_setup(
         "console_scripts": [
             "nextb-football-init-db = NextBFootBallAnalysis.cli.cli_init_football_db:run",
             "nextb-football-get-last-matchs = NextBFootBallAnalysis.cli.cli_get_last_matchs:run",
-            "nextb-football-get-team-match = NextBFootBallAnalysis.cli.cli_get_team_match:run",
+            "nextb-football-get-team = NextBFootBallAnalysis.cli.cli_get_team:run",
+            "nextb-football-get-match = NextBFootBallAnalysis.cli.cli_get_match:run",
             "nextb-football-get-recommend = NextBFootBallAnalysis.cli.cli_get_recommend:run",
             "nextb-football-simulation = NextBFootBallAnalysis.cli.cli_simulation:run",
         ],

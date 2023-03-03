@@ -190,7 +190,7 @@ class NextbFootballSqliteDB:
             return datas
         else:
             return []
-        
+
     def get_home_team_goals_group_by(self, team, seasons):
         data = (
             self.session_maker.query(
@@ -212,7 +212,7 @@ class NextbFootballSqliteDB:
             return datas
         else:
             return []
-        
+
     def get_away_team_goals_group_by(self, team, seasons):
         data = (
             self.session_maker.query(
@@ -221,6 +221,29 @@ class NextbFootballSqliteDB:
             .filter(
                 and_(
                     NextbFootballDatas.away_team == team,
+                    NextbFootballDatas.season.in_(seasons),
+                )
+            )
+            .group_by(NextbFootballDatas.ftg)
+            .all()
+        )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_team_match_goals_group_by(self, hteam, ateam, seasons):
+        data = (
+            self.session_maker.query(
+                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+            )
+            .filter(
+                and_(
+                    NextbFootballDatas.home_team == hteam,
+                    NextbFootballDatas.away_team == ateam,
                     NextbFootballDatas.season.in_(seasons),
                 )
             )
@@ -259,6 +282,28 @@ class NextbFootballSqliteDB:
             return datas
         else:
             return []
+
+    def get_last_goal_match(self, home_team, away_team, goal):
+        """
+        获取指定两支球队最近近N球的比赛的时间
+        """
+        teams = [home_team, away_team]
+        data = (
+            self.session_maker.query(NextbFootballDatas)
+            .filter(
+                and_(
+                    NextbFootballDatas.home_team.in_(teams),
+                    NextbFootballDatas.away_team.in_(teams),
+                    NextbFootballDatas.ftg == goal,
+                )
+            )
+            .order_by(NextbFootballDatas.id.desc())
+            .limit(1)
+        )
+        if data.count():
+            return data[0]
+        else:
+            return None
 
     def get_mergeteams_matchs(self, teams, number=10):
         """

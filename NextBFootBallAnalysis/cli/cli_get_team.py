@@ -2,7 +2,7 @@
 # @Time     : 2023/01/17 11:04:51
 # @Author   : ddvv
 # @Site     : https://ddvvmmzz.github.io
-# @File     : cli_get_team_match_report.py
+# @File     : cli_get_team.py
 # @Software : Visual Studio Code
 # @WeChat   : NextB
 
@@ -10,7 +10,7 @@
 import argparse
 from prettytable import PrettyTable
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
-from NextBFootBallAnalysis.libs.common import get_team_match
+from NextBFootBallAnalysis.libs.common import get_team
 
 
 def parse_cmd():
@@ -55,7 +55,7 @@ def run():
         "team": args.team,
         "number": args.number,
     }
-    datas = get_team_match(param)
+    datas = get_team(param)
     x = PrettyTable()
     x.field_names = ["比赛时间", "主队", "客队", "半场比分", "全场比分"]
     x.add_rows(datas)

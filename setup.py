@@ -59,6 +59,7 @@ do_setup(
             "nextb-football-get-match = NextBFootBallAnalysis.cli.cli_get_match:run",
             "nextb-football-get-recommend = NextBFootBallAnalysis.cli.cli_get_recommend:run",
             "nextb-football-simulation = NextBFootBallAnalysis.cli.cli_simulation:run",
+            "nextb-football-get-markdown = NextBFootBallAnalysis.cli.cli_get_markdown:run",
         ],
     },
     classifiers=[

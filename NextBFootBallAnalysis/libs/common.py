@@ -18,6 +18,7 @@ from NextBFootBallAnalysis.libs.constant import (
     CLUB_NAME_MAPPING,
     DEFAULT_MATCHS_NUMBER,
     LEAGUES_MAPPING,
+    MAX_MATCHS_NUMBER,
 )
 
 
@@ -395,6 +396,7 @@ def get_team(param):
     datas.reverse()
     return datas
 
+
 def get_match(param):
     teams = param.get("teams")
     home_team_ori = teams[0]
@@ -412,8 +414,12 @@ def get_match(param):
     # 构造全赛季列表
     all_seasons = nfs.create_season_list(season, 30)
     # 历史比赛记录
-    match_datas_1 = nfs.get_team_match_goals_group_by(hteam=home_team, ateam=away_team, seasons=all_seasons)
-    match_datas_2 = nfs.get_team_match_goals_group_by(hteam=away_team, ateam=home_team, seasons=all_seasons)
+    match_datas_1 = nfs.get_team_match_goals_group_by(
+        hteam=home_team, ateam=away_team, seasons=all_seasons
+    )
+    match_datas_2 = nfs.get_team_match_goals_group_by(
+        hteam=away_team, ateam=home_team, seasons=all_seasons
+    )
     # 统计进球数
     for goal in range(0, 20):
         d1 = 0
@@ -449,3 +455,172 @@ def get_match(param):
         datas.append(data)
     datas.sort(key=lambda x: x[1], reverse=True)
     return datas
+
+
+def get_markdown(param):
+    def statics(team, matchs):
+        # 统计胜、平、负场次
+        win = 0
+        de = 0
+        lose = 0
+        # 统计总进球、总丢球、平均进球、平均丢球
+        goal_sum = 0
+        los_goal_sum = 0
+        for m in matchs:
+            # 主队
+            if m.home_team == team:
+                # 进球数
+                goal_sum += m.fthg
+                # 丢球数
+                los_goal_sum += m.ftag
+                # 赢
+                if m.fthg > m.ftag:
+                    win += 1
+                # 输
+                elif m.fthg < m.ftag:
+                    lose += 1
+                # 平
+                else:
+                    de += 1
+            # 客队
+            else:
+                # 进球数
+                goal_sum += m.ftag
+                # 丢球数
+                los_goal_sum += m.fthg
+                # 输
+                if m.fthg > m.ftag:
+                    lose += 1
+                # 赢
+                elif m.fthg < m.ftag:
+                    win += 1
+                # 平
+                else:
+                    de += 1
+        return [win, de, lose, goal_sum, los_goal_sum]
+
+    teams = param.get("teams")
+    home_team_ori = teams[0]
+    away_team_ori = teams[1]
+    home_team = CLUB_NAME_MAPPING.get(home_team_ori, home_team_ori)
+    away_team = CLUB_NAME_MAPPING.get(away_team_ori, away_team_ori)
+    # 转换为中文名称
+    CLUB_NAME_MAPPING_TRANSFER = dict(
+        zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
+    )
+    # 转换为中文名称
+    LEAGUES_MAPPING_TRANSFER = dict(
+        zip(LEAGUES_MAPPING.values(), LEAGUES_MAPPING.keys())
+    )
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    print("# {} vs {} 比赛分析报告\n".format(home_team_ori, away_team_ori))
+    print("## 一、{} vs {} 近10场比赛结果\n".format(home_team_ori, away_team_ori))
+    print("|比赛时间|主队|客队|半场比分|全场比分|")
+    print("|----|----|----|----|-----|")
+    matchs = nfs.get_last_matchs(
+        home_team=home_team, away_team=away_team, number=MAX_MATCHS_NUMBER
+    )
+    matchs.reverse()
+    for m in matchs[:10]:
+        print(
+            "|{}|{}|{}|{}-{}|{}-{}|".format(
+                m.date_time.strftime("%Y/%m/%d"),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                m.hthg,
+                m.htag,
+                m.fthg,
+                m.ftag,
+            )
+        )
+    m_statics = statics(home_team, matchs[:10])
+    print(
+        "\n{}对阵{}的{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            home_team_ori,
+            away_team_ori,
+            len(matchs[:10]),
+            LEAGUES_MAPPING_TRANSFER.get(matchs[0].div),
+            home_team_ori,
+            m_statics[0],
+            m_statics[1],
+            m_statics[2],
+            m_statics[3],
+            m_statics[4],
+        )
+    )
+    m_statics = statics(home_team, matchs)
+    print(
+        "\n{}对阵{}的{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            home_team_ori,
+            away_team_ori,
+            len(matchs),
+            LEAGUES_MAPPING_TRANSFER.get(matchs[0].div),
+            home_team_ori,
+            m_statics[0],
+            m_statics[1],
+            m_statics[2],
+            m_statics[3],
+            m_statics[4],
+        )
+    )
+    print("\n## 二、{} 近10场比赛结果\n".format(home_team_ori))
+    print("|比赛时间|主队|客队|半场比分|全场比分|")
+    print("|----|----|----|----|-----|")
+    h_matchs = nfs.get_team_last_matchs(team=home_team, number=10)
+    h_matchs.reverse()
+    for m in h_matchs:
+        print(
+            "|{}|{}|{}|{}-{}|{}-{}|".format(
+                m.date_time.strftime("%Y/%m/%d"),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                m.hthg,
+                m.htag,
+                m.fthg,
+                m.ftag,
+            )
+        )
+    h_statics = statics(home_team, h_matchs)
+    print(
+        "\n近{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            len(h_matchs),
+            LEAGUES_MAPPING_TRANSFER.get(h_matchs[0].div),
+            home_team_ori,
+            h_statics[0],
+            h_statics[1],
+            h_statics[2],
+            h_statics[3],
+            h_statics[4],
+        )
+    )
+    print("\n## 三、{} 近10场比赛结果\n".format(away_team_ori))
+    print("|比赛时间|主队|客队|半场比分|全场比分|")
+    print("|----|----|----|----|-----|")
+    a_matchs = nfs.get_team_last_matchs(team=away_team, number=10)
+    a_matchs.reverse()
+    for m in a_matchs:
+        print(
+            "|{}|{}|{}|{}-{}|{}-{}|".format(
+                m.date_time.strftime("%Y/%m/%d"),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                m.hthg,
+                m.htag,
+                m.fthg,
+                m.ftag,
+            )
+        )
+    a_statics = statics(away_team, a_matchs)
+    print(
+        "\n近{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            len(a_matchs),
+            LEAGUES_MAPPING_TRANSFER.get(a_matchs[0].div),
+            away_team_ori,
+            a_statics[0],
+            a_statics[1],
+            a_statics[2],
+            a_statics[3],
+            a_statics[4],
+        )
+    )

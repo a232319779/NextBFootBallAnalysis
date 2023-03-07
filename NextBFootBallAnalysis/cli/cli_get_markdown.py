@@ -44,4 +44,8 @@ def run():
     param = {
         "teams": args.teams,
     }
-    get_markdown(param)
+    datas = get_markdown(param)
+    markdown_file_name = "{} vs {} 比赛分析报告.md".format(args.teams[0], args.teams[1])
+    with open(markdown_file_name, "w", encoding="utf8") as f:
+        f.write("\n".join(datas))
+    print("md文件已生成，文件名：《{}》".format(markdown_file_name))

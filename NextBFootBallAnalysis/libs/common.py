@@ -514,16 +514,17 @@ def get_markdown(param):
     )
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
-    print("# {} vs {} 比赛分析报告\n".format(home_team_ori, away_team_ori))
-    print("## 一、{} vs {} 近10场比赛结果\n".format(home_team_ori, away_team_ori))
-    print("|比赛时间|主队|客队|半场比分|全场比分|")
-    print("|----|----|----|----|-----|")
+    out_datas = list()
+    out_datas.append("# {} vs {} 比赛分析报告\n".format(home_team_ori, away_team_ori))
+    out_datas.append("## 一、{} vs {} 近10场比赛结果\n".format(home_team_ori, away_team_ori))
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
+    out_datas.append("|----|----|----|----|-----|")
     matchs = nfs.get_last_matchs(
         home_team=home_team, away_team=away_team, number=MAX_MATCHS_NUMBER
     )
     matchs.reverse()
     for m in matchs[:10]:
-        print(
+        out_datas.append(
             "|{}|{}|{}|{}-{}|{}-{}|".format(
                 m.date_time.strftime("%Y/%m/%d"),
                 CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
@@ -535,7 +536,7 @@ def get_markdown(param):
             )
         )
     m_statics = statics(home_team, matchs[:10])
-    print(
+    out_datas.append(
         "\n{}对阵{}的{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
             home_team_ori,
             away_team_ori,
@@ -550,7 +551,7 @@ def get_markdown(param):
         )
     )
     m_statics = statics(home_team, matchs)
-    print(
+    out_datas.append(
         "\n{}对阵{}的{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
             home_team_ori,
             away_team_ori,
@@ -564,13 +565,13 @@ def get_markdown(param):
             m_statics[4],
         )
     )
-    print("\n## 二、{} 近10场比赛结果\n".format(home_team_ori))
-    print("|比赛时间|主队|客队|半场比分|全场比分|")
-    print("|----|----|----|----|-----|")
+    out_datas.append("\n## 二、{} 近10场比赛结果\n".format(home_team_ori))
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
+    out_datas.append("|----|----|----|----|-----|")
     h_matchs = nfs.get_team_last_matchs(team=home_team, number=10)
     h_matchs.reverse()
     for m in h_matchs:
-        print(
+        out_datas.append(
             "|{}|{}|{}|{}-{}|{}-{}|".format(
                 m.date_time.strftime("%Y/%m/%d"),
                 CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
@@ -582,7 +583,7 @@ def get_markdown(param):
             )
         )
     h_statics = statics(home_team, h_matchs)
-    print(
+    out_datas.append(
         "\n近{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
             len(h_matchs),
             LEAGUES_MAPPING_TRANSFER.get(h_matchs[0].div),
@@ -594,13 +595,13 @@ def get_markdown(param):
             h_statics[4],
         )
     )
-    print("\n## 三、{} 近10场比赛结果\n".format(away_team_ori))
-    print("|比赛时间|主队|客队|半场比分|全场比分|")
-    print("|----|----|----|----|-----|")
+    out_datas.append("\n## 三、{} 近10场比赛结果\n".format(away_team_ori))
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
+    out_datas.append("|----|----|----|----|-----|")
     a_matchs = nfs.get_team_last_matchs(team=away_team, number=10)
     a_matchs.reverse()
     for m in a_matchs:
-        print(
+        out_datas.append(
             "|{}|{}|{}|{}-{}|{}-{}|".format(
                 m.date_time.strftime("%Y/%m/%d"),
                 CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
@@ -612,7 +613,7 @@ def get_markdown(param):
             )
         )
     a_statics = statics(away_team, a_matchs)
-    print(
+    out_datas.append(
         "\n近{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
             len(a_matchs),
             LEAGUES_MAPPING_TRANSFER.get(a_matchs[0].div),
@@ -624,3 +625,5 @@ def get_markdown(param):
             a_statics[4],
         )
     )
+
+    return out_datas

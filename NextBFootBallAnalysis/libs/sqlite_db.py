@@ -144,20 +144,35 @@ class NextbFootballSqliteDB:
         else:
             return []
 
-    def get_div_goals_group_by(self, div, seasons):
-        data = (
-            self.session_maker.query(
-                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
-            )
-            .filter(
-                and_(
-                    NextbFootballDatas.div == div,
-                    NextbFootballDatas.season.in_(seasons),
+    def get_div_goals_group_by(self, div, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
                 )
+                .filter(
+                    and_(
+                        NextbFootballDatas.div == div,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
             )
-            .group_by(NextbFootballDatas.ftg)
-            .all()
-        )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.div == div,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
         if len(data) > 0:
             datas = list()
             for d in data:
@@ -166,23 +181,115 @@ class NextbFootballSqliteDB:
         else:
             return []
 
-    def get_team_goals_group_by(self, team, seasons):
-        data = (
-            self.session_maker.query(
-                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+    def get_team_goals_group_by(self, team, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
+                        or_(
+                            NextbFootballDatas.home_team == team,
+                            NextbFootballDatas.away_team == team,
+                        ),
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
             )
-            .filter(
-                and_(
-                    or_(
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        or_(
+                            NextbFootballDatas.home_team == team,
+                            NextbFootballDatas.away_team == team,
+                        ),
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_home_team_goals_group_by(self, team, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
                         NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
+            )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_away_team_goals_group_by(self, team, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
                         NextbFootballDatas.away_team == team,
-                    ),
-                    NextbFootballDatas.season.in_(seasons),
+                        NextbFootballDatas.season.in_(seasons),
+                    )
                 )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
             )
-            .group_by(NextbFootballDatas.ftg)
-            .all()
-        )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.away_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
         if len(data) > 0:
             datas = list()
             for d in data:
@@ -191,65 +298,37 @@ class NextbFootballSqliteDB:
         else:
             return []
 
-    def get_home_team_goals_group_by(self, team, seasons):
-        data = (
-            self.session_maker.query(
-                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
-            )
-            .filter(
-                and_(
-                    NextbFootballDatas.home_team == team,
-                    NextbFootballDatas.season.in_(seasons),
+    def get_team_match_goals_group_by(self, hteam, ateam, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
                 )
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == hteam,
+                        NextbFootballDatas.away_team == ateam,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
             )
-            .group_by(NextbFootballDatas.ftg)
-            .all()
-        )
-        if len(data) > 0:
-            datas = list()
-            for d in data:
-                datas.append(d)
-            return datas
         else:
-            return []
-
-    def get_away_team_goals_group_by(self, team, seasons):
-        data = (
-            self.session_maker.query(
-                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
-            )
-            .filter(
-                and_(
-                    NextbFootballDatas.away_team == team,
-                    NextbFootballDatas.season.in_(seasons),
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
                 )
-            )
-            .group_by(NextbFootballDatas.ftg)
-            .all()
-        )
-        if len(data) > 0:
-            datas = list()
-            for d in data:
-                datas.append(d)
-            return datas
-        else:
-            return []
-
-    def get_team_match_goals_group_by(self, hteam, ateam, seasons):
-        data = (
-            self.session_maker.query(
-                NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
-            )
-            .filter(
-                and_(
-                    NextbFootballDatas.home_team == hteam,
-                    NextbFootballDatas.away_team == ateam,
-                    NextbFootballDatas.season.in_(seasons),
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == hteam,
+                        NextbFootballDatas.away_team == ateam,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
                 )
+                .group_by(NextbFootballDatas.htg)
+                .all()
             )
-            .group_by(NextbFootballDatas.ftg)
-            .all()
-        )
         if len(data) > 0:
             datas = list()
             for d in data:

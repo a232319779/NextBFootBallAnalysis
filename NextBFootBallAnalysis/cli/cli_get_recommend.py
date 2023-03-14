@@ -40,6 +40,15 @@ def parse_cmd():
         action="store",
         default=2,
     )
+    parser.add_argument(
+        "-st",
+        "--statics_type",
+        help="指定进球统计类型,可选值包括[0: 半场, 1: 全场],默认值为: 1,统计全场进球数.",
+        type=int,
+        dest="statics_type",
+        action="store",
+        default=1,
+    )
 
     args = parser.parse_args()
 
@@ -51,11 +60,16 @@ def run():
     CLI命令行入口
     """
     args = parse_cmd()
-    param = {"season": args.season, "goals": args.goals}
+    param = {
+        "season": args.season,
+        "goals": args.goals,
+        "statics_type": args.statics_type,
+    }
     datas = get_recommend(param)
     x = PrettyTable()
     x.field_names = [
         "联赛名称",
+        "半全场",
         "球队名称",
         "联赛{}球占比".format(args.goals),
         "比赛场次",

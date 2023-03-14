@@ -273,11 +273,11 @@ def get_recommend(param):
     headers: 联赛名称,球队名称,联赛N球占比,比赛场次,球队N球占比,赛季占比,占比方差
     """
 
-    def calc_variance(ct, seasons):
+    def calc_variance(ct, seasons, statics_type):
         ratio_list = list()
         for s in seasons:
             # 获取分布统计
-            team_group_data = nfs.get_team_goals_group_by(ct, [s])
+            team_group_data = nfs.get_team_goals_group_by(ct, [s], statics_type)
             count_sum = sum([p[1] for p in team_group_data])
             ratio = 0.0
             for tgd in team_group_data:
@@ -290,6 +290,10 @@ def get_recommend(param):
 
     goals = param.get("goals", 2)
     season = param.get("season", "2022-2023")
+    statics_type = param.get("statics_type", 1)
+    statics_type_str = "半场"
+    if statics_type == 1:
+        statics_type_str = "全场"
     # 球队转换为中文名称
     CLUB_NAME_MAPPING_TRANSFER = dict(
         zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
@@ -308,7 +312,7 @@ def get_recommend(param):
         if len(current_teams) == 0:
             continue
         # 计算联赛N进球占比
-        div_goals = nfs.get_div_goals_group_by(div, all_seasons)
+        div_goals = nfs.get_div_goals_group_by(div, all_seasons, statics_type)
         div_goals_sum = sum([p[1] for p in div_goals])
         div_goals_ratio = 0.0
         for dg in div_goals:
@@ -318,7 +322,7 @@ def get_recommend(param):
         # 按联赛球队统计数据
         for ct in tqdm(current_teams, unit="球队", desc="球队计算中"):
             # 球队总进球占比
-            team_goals = nfs.get_team_goals_group_by(ct, all_seasons)
+            team_goals = nfs.get_team_goals_group_by(ct, all_seasons, statics_type)
             team_goals_sum = sum([p[1] for p in team_goals])
             team_goals_ratio = 0.0
             for dg in team_goals:
@@ -329,7 +333,9 @@ def get_recommend(param):
             if team_goals_ratio - div_goals_ratio <= 0:
                 continue
             # 计算主场进球占比
-            home_goals = nfs.get_home_team_goals_group_by(ct, all_seasons[-3:])
+            home_goals = nfs.get_home_team_goals_group_by(
+                ct, all_seasons[-3:], statics_type
+            )
             home_goals_sum = sum([p[1] for p in home_goals])
             home_goals_ratio = 0.0
             for dg in home_goals:
@@ -337,7 +343,9 @@ def get_recommend(param):
                     count = dg[1]
                     home_goals_ratio = round(count / home_goals_sum, 3)
             # 计算客场进球占比
-            away_goals = nfs.get_away_team_goals_group_by(ct, all_seasons[-3:])
+            away_goals = nfs.get_away_team_goals_group_by(
+                ct, all_seasons[-3:], statics_type
+            )
             away_goals_sum = sum([p[1] for p in away_goals])
             away_goals_ratio = 0.0
             for dg in away_goals:
@@ -345,7 +353,9 @@ def get_recommend(param):
                     count = dg[1]
                     away_goals_ratio = round(count / away_goals_sum, 3)
             # 球队当前赛季进球占比
-            team_season_goals = nfs.get_team_goals_group_by(ct, [all_seasons[-1]])
+            team_season_goals = nfs.get_team_goals_group_by(
+                ct, [all_seasons[-1]], statics_type
+            )
             team_season_goals_sum = sum([p[1] for p in team_season_goals])
             team_season_goals_ratio = 0.0
             for dg in team_season_goals:
@@ -353,9 +363,10 @@ def get_recommend(param):
                     count = dg[1]
                     team_season_goals_ratio = round(count / team_season_goals_sum, 3)
             # 计算方差
-            t_variance = round(calc_variance(ct, all_seasons), 4)
+            t_variance = round(calc_variance(ct, all_seasons, statics_type), 4)
             team_datas = list()
             team_datas.append(name)
+            team_datas.append(statics_type_str)
             team_datas.append(CLUB_NAME_MAPPING_TRANSFER.get(ct, ct))
             team_datas.append(div_goals_ratio)
             team_datas.append(team_goals_sum)
@@ -365,7 +376,7 @@ def get_recommend(param):
             team_datas.append(team_season_goals_ratio)
             team_datas.append(t_variance)
             datas[div].append(team_datas)
-        datas[div].sort(key=lambda x: x[8])
+        datas[div].sort(key=lambda x: x[-1])
         # 只要筛选出来的前3个
         datas[div] = datas[div][:3]
     nfs.close_session()

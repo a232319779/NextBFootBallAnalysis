@@ -55,10 +55,11 @@ do_setup(
         "console_scripts": [
             "nextb-football-init-db = NextBFootBallAnalysis.cli.cli_init_football_db:run",
             "nextb-football-get-last-matchs = NextBFootBallAnalysis.cli.cli_get_last_matchs:run",
-            "nextb-football-get-team-match = NextBFootBallAnalysis.cli.cli_get_team_match:run",
-            "nextb-football-get-recommend-csv = NextBFootBallAnalysis.cli.cli_get_recommend_csv:run",
-            "nextb-football-get-recommend-merge-csv = NextBFootBallAnalysis.cli.cli_get_recommend_merge_csv:run",
+            "nextb-football-get-team = NextBFootBallAnalysis.cli.cli_get_team:run",
+            "nextb-football-get-match = NextBFootBallAnalysis.cli.cli_get_match:run",
+            "nextb-football-get-recommend = NextBFootBallAnalysis.cli.cli_get_recommend:run",
             "nextb-football-simulation = NextBFootBallAnalysis.cli.cli_simulation:run",
+            "nextb-football-get-markdown = NextBFootBallAnalysis.cli.cli_get_markdown:run",
         ],
     },
     classifiers=[
@@ -70,5 +71,10 @@ do_setup(
     keywords=[],
     license="MIT",
     include_package_data=True,
-    install_requires=["sqlalchemy==1.4.31", "prettytable==3.6.0", "tqdm==4.62.3"],
+    install_requires=[
+        "sqlalchemy==1.4.31",
+        "prettytable==3.6.0",
+        "tqdm==4.62.3",
+        "python-dateutil",
+    ],
 )

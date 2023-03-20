@@ -7,23 +7,18 @@
 # @WeChat   : NextB
 
 import os
-import sys
 import datetime
-import multiprocessing
 from tqdm import tqdm
 from collections import Counter
-from statistics import mean, median, median_low, median_high
+from statistics import mean, median, variance
 from dateutil.relativedelta import relativedelta
 from NextBFootBallAnalysis.libs.sqlite_db import NextbFootballSqliteDB
 from NextBFootBallAnalysis.libs.constant import (
     YEARS_MAPPING,
     CLUB_NAME_MAPPING,
-    MAX_MATCHS_NUMBER,
     DEFAULT_MATCHS_NUMBER,
     LEAGUES_MAPPING,
-    STATICS_TYPE_HALF,
-    STATICS_TYPE_FULL,
-    STATICS_DATA_TYPE,
+    MAX_MATCHS_NUMBER,
 )
 
 
@@ -271,250 +266,125 @@ def get_last_matchs(param):
     return datas
 
 
-def csv_recommend_data(team_matchs):
-    def parse_data(statics_type):
-        if STATICS_TYPE_FULL == statics_type:
-            tg = match.ftg
-        else:
-            tg = match.htg
-        # 统计进球间隔场次
-        if tg != -1:
-            if tg in goals_dist_tmp[statics_type].keys():
-                if tg not in dist_datas[statics_type].keys():
-                    dist_datas[statics_type][tg] = list()
-                dist_datas[statics_type][tg].append(goals_dist_tmp[statics_type][tg])
-            # 老的进球场数间隔+1场
-            for a in goals_dist_tmp[statics_type].keys():
-                goals_dist_tmp[statics_type][a] += 1
-            # 新的进球场数间隔清0
-            goals_dist_tmp[statics_type][tg] = 0
+def get_recommend(param):
+    """
+    推荐原理：
+    计算每支球队，每个赛季的进球占比，计算占比方差，选择占比最大，方差最小的前3支球队
+    headers: 联赛名称,球队名称,联赛N球占比,比赛场次,球队N球占比,赛季占比,占比方差
+    """
 
-    dist_datas = {STATICS_TYPE_HALF: dict(), STATICS_TYPE_FULL: dict()}
-    # 用于动态记录场次间隔变化
-    goals_dist_tmp = {STATICS_TYPE_HALF: dict(), STATICS_TYPE_FULL: dict()}
-    for match in team_matchs:
-        # 半场进球类型
-        parse_data(STATICS_TYPE_HALF)
-        # 全场进球类型
-        parse_data(STATICS_TYPE_FULL)
-
-    return dist_datas
-
-
-def parse_csv_recommend_data(datas):
-    recommend_list = list()
-    div = datas.get("div")
-    team = datas.get("team")
-    history_total = datas.get("total")
-    data_type = datas.get("data_type")
-    statics_type = {STATICS_TYPE_HALF: "半场进球", STATICS_TYPE_FULL: "全场进球"}
-    recommend_data = datas.get("recommend_data", [])
-    for st, data in recommend_data.items():
-        for key, value in data.items():
-            # 统计每个进球场次间隔的占比
-            counter_str_list = list()
-            counter = Counter(value)
-            total = sum(counter.values())
-            index = 0
-            for a, b in counter.most_common():
-                b1 = "%.2f" % (b / total)
-                counter_str_list.append("{}|{}".format(str(a), str(b1)))
-                index += 1
-                # 只看top3的
-                if index >= 3:
+    def calc_variance(ct, seasons, statics_type):
+        ratio_list = list()
+        for s in seasons:
+            # 获取分布统计
+            team_group_data = nfs.get_team_goals_group_by(ct, [s], statics_type)
+            count_sum = sum([p[1] for p in team_group_data])
+            ratio = 0.0
+            for tgd in team_group_data:
+                if goals == tgd[0]:
+                    count = tgd[1]
+                    ratio = round(count / count_sum, 3)
                     break
-            tmp_list = list()
-            # 联赛名称,球队名称,统计类型,历史场次,比赛场次,进球数,最大,1/4位,1/2位,3/4位,平均,占比1,占比2,占比3
-            tmp_list.append(div)
-            tmp_list.append(team)
-            tmp_list.append(statics_type.get(st))
-            tmp_list.append(str(history_total))
-            tmp_list.append(data_type)
-            tmp_list.append(str(key))
-            tmp_list.append(str(max(value)))
-            tmp_list.append(str(median_low(value)))
-            tmp_list.append(str(median(value)))
-            tmp_list.append(str(median_high(value)))
-            tmp_list.append("%.1f" % mean(value))
-            tmp_list.extend(counter_str_list)
-            recommend_list.append(",".join(tmp_list))
-    return recommend_list
+            ratio_list.append(ratio)
+        return variance(ratio_list)
 
-
-def parse_csv_merge_recommend_data(datas):
-    recommend_list = list()
-    team = datas.get("team")
-    history_total = datas.get("total")
-    recommend_data = datas.get("recommend_data", [])
-    data = recommend_data[0]
-    for key, value in data.items():
-        if max(value) > 15:
-            continue
-        tmp_list = list()
-        # 球队名称,历史场次,进球数,最大,1/4位,1/2位,3/4位,平均
-        tmp_list.append(team)
-        tmp_list.append(str(history_total))
-        tmp_list.append(str(key))
-        tmp_list.append(str(max(value)))
-        tmp_list.append(str(median_low(value)))
-        tmp_list.append(str(median(value)))
-        tmp_list.append(str(median_high(value)))
-        tmp_list.append("%.1f" % mean(value))
-        recommend_list.append(",".join(tmp_list))
-    return recommend_list
-
-
-def get_recommend_csv(param):
-    csv_name = param.get("csv_name")
-    # 转换为中文名称
+    goals = param.get("goals", 2)
+    season = param.get("season", "2022-2023")
+    statics_type = param.get("statics_type", 1)
+    statics_type_str = "半场"
+    if statics_type == 1:
+        statics_type_str = "全场"
+    # 球队转换为中文名称
     CLUB_NAME_MAPPING_TRANSFER = dict(
         zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
     )
 
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
-    datas = list()
-    for name, div in LEAGUES_MAPPING.items():
-        # 查询联赛全部比赛
-        matchs = nfs.get_league_last_matchs(div=div, number=1)
-        # 未查询到数据
-        if not matchs:
+    # 构造全赛季列表
+    all_seasons = nfs.create_season_list(season, 30)
+    datas = dict()
+    for name, div in tqdm(LEAGUES_MAPPING.items(), unit="联赛", desc="联赛计算中"):
+        if div not in datas.keys():
+            datas[div] = list()
+        # 获取指定联赛指定赛季参赛球队
+        current_teams = nfs.get_season_teams(div, season)
+        if len(current_teams) == 0:
             continue
-        # 查询本赛季参赛球队列表
-        current_teams = nfs.get_season_teams(div, matchs[-1].season)
-        for ct in current_teams:
-            team_sql_data = nfs.get_team_last_matchs(ct, number=MAX_MATCHS_NUMBER)
-            total = len(team_sql_data)
-            for sdt, sdt_value in STATICS_DATA_TYPE.items():
-                recommend_data = csv_recommend_data(team_sql_data[-sdt_value:])
-                team_recommend_data = {
-                    "div": name,
-                    "team": CLUB_NAME_MAPPING_TRANSFER.get(ct, ct),
-                    "total": total,
-                    "data_type": "{}".format(sdt),
-                    "recommend_data": recommend_data,
-                }
-                p = parse_csv_recommend_data(team_recommend_data)
-                datas.extend(p)
+        # 计算联赛N进球占比
+        div_goals = nfs.get_div_goals_group_by(div, all_seasons, statics_type)
+        div_goals_sum = sum([p[1] for p in div_goals])
+        div_goals_ratio = 0.0
+        for dg in div_goals:
+            if goals == dg[0]:
+                count = dg[1]
+                div_goals_ratio = round(count / div_goals_sum, 3)
+        # 按联赛球队统计数据
+        for ct in tqdm(current_teams, unit="球队", desc="球队计算中"):
+            # 球队总进球占比
+            team_goals = nfs.get_team_goals_group_by(ct, all_seasons, statics_type)
+            team_goals_sum = sum([p[1] for p in team_goals])
+            team_goals_ratio = 0.0
+            for dg in team_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    team_goals_ratio = round(count / team_goals_sum, 3)
+            # 球队占比低于历史占比，则不要
+            if team_goals_ratio - div_goals_ratio <= 0:
+                continue
+            # 计算主场进球占比
+            home_goals = nfs.get_home_team_goals_group_by(
+                ct, all_seasons[-3:], statics_type
+            )
+            home_goals_sum = sum([p[1] for p in home_goals])
+            home_goals_ratio = 0.0
+            for dg in home_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    home_goals_ratio = round(count / home_goals_sum, 3)
+            # 计算客场进球占比
+            away_goals = nfs.get_away_team_goals_group_by(
+                ct, all_seasons[-3:], statics_type
+            )
+            away_goals_sum = sum([p[1] for p in away_goals])
+            away_goals_ratio = 0.0
+            for dg in away_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    away_goals_ratio = round(count / away_goals_sum, 3)
+            # 球队当前赛季进球占比
+            team_season_goals = nfs.get_team_goals_group_by(
+                ct, [all_seasons[-1]], statics_type
+            )
+            team_season_goals_sum = sum([p[1] for p in team_season_goals])
+            team_season_goals_ratio = 0.0
+            for dg in team_season_goals:
+                if goals == dg[0]:
+                    count = dg[1]
+                    team_season_goals_ratio = round(count / team_season_goals_sum, 3)
+            # 计算方差
+            t_variance = round(calc_variance(ct, all_seasons, statics_type), 4)
+            team_datas = list()
+            team_datas.append(name)
+            team_datas.append(statics_type_str)
+            team_datas.append(CLUB_NAME_MAPPING_TRANSFER.get(ct, ct))
+            team_datas.append(div_goals_ratio)
+            team_datas.append(team_goals_sum)
+            team_datas.append(team_goals_ratio)
+            team_datas.append(home_goals_ratio)
+            team_datas.append(away_goals_ratio)
+            team_datas.append(team_season_goals_ratio)
+            team_datas.append(t_variance)
+            datas[div].append(team_datas)
+        datas[div].sort(key=lambda x: x[-1])
+        # 只要筛选出来的前3个
+        datas[div] = datas[div][:3]
     nfs.close_session()
     nfs.close()
-    headers = "联赛名称,球队名称,统计类型,历史场次,比赛场次,进球数,最大,1/4位,1/2位,3/4位,平均,占比1,占比2,占比3"
-    with open(csv_name, "w", encoding="utf8") as f:
-        f.write(headers + "\n")
-        f.write("\n".join(datas))
-
-
-def process_merge_data(epl_teams, others_teams, number):
-    nfs = NextbFootballSqliteDB()
-    nfs.create_session()
-    # 转换为中文名称
-    CLUB_NAME_MAPPING_TRANSFER = dict(
-        zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
-    )
-    datas = list()
-    for e0_team in tqdm(
-        epl_teams,
-        unit="team",
-        desc="英超",
-        position=0,
-        leave=False,
-    ):
-        for i1_team in tqdm(
-            others_teams["I1"],
-            unit="team",
-            desc="意甲",
-            position=1,
-            leave=False,
-        ):
-            for sp1_team in tqdm(
-                others_teams["SP1"],
-                unit="team",
-                desc="西甲",
-                position=2,
-                leave=False,
-            ):
-                for f1_team in tqdm(
-                    others_teams["F1"],
-                    unit="team",
-                    desc="法甲",
-                    position=3,
-                    leave=False,
-                ):
-                    for d1_team in tqdm(
-                        others_teams["D1"],
-                        unit="team",
-                        desc="德甲",
-                        position=4,
-                        leave=False,
-                    ):
-                        merge_teamd = [e0_team, i1_team, sp1_team, d1_team, f1_team]
-                        team_sql_data = nfs.get_mergeteams_matchs(
-                            merge_teamd, number=number
-                        )
-                        total = len(team_sql_data)
-                        recommend_data = csv_recommend_data(team_sql_data)
-                        team_names = [
-                            CLUB_NAME_MAPPING_TRANSFER.get(ct, ct) for ct in merge_teamd
-                        ]
-                        team_recommend_data = {
-                            "team": "|".join(team_names),
-                            "total": total,
-                            "recommend_data": recommend_data,
-                        }
-                        p = parse_csv_merge_recommend_data(team_recommend_data)
-                        datas.extend(p)
     return datas
 
 
-def get_recommend_merge_csv(param):
-    if sys.platform.startswith("win"):
-        # On Windows calling this function is necessary.
-        multiprocessing.freeze_support()
-    try:
-        from concurrent.futures import ProcessPoolExecutor, wait, ALL_COMPLETED
-    except:
-        sys.exit(0)
-    csv_name = param.get("csv_name")
-    number = param.get("number", 0)
-    number = number if number != 0 else MAX_MATCHS_NUMBER * 5
-
-    nfs = NextbFootballSqliteDB()
-    nfs.create_session()
-    datas = list()
-    current_teams = dict()
-    # 获取当前赛季各大联赛参赛球队列表
-    for _, div in LEAGUES_MAPPING.items():
-        # 查询当前赛季
-        last_match = nfs.get_league_last_matchs(div=div, number=1)
-        # 未查询到数据
-        if not last_match:
-            continue
-        # 查询本赛季参赛球队列表
-        current_teams[div] = nfs.get_season_teams(div, last_match[-1].season)
-    nfs.close_session()
-    nfs.close()
-    max_workers = 10
-    e0_teams = current_teams["E0"]
-    datas = list()
-    with ProcessPoolExecutor(max_workers=max_workers) as executor:
-        all_task = [
-            executor.submit(
-                process_merge_data, e0_teams[k : k + 2], current_teams, number
-            )
-            for k in range(0, len(e0_teams), 2)
-        ]
-        wait(all_task, return_when=ALL_COMPLETED)
-        for task in all_task:
-            result = task.result()
-            datas.extend(result)
-
-    headers = "球队名称,历史场次,进球数,最大,1/4位,1/2位,3/4位,平均"
-    with open(csv_name, "w", encoding="utf8") as f:
-        f.write(headers + "\n")
-        f.write("\n".join(datas))
-
-
-def get_team_match(param):
+def get_team(param):
     team_ori = param.get("team")
     team = CLUB_NAME_MAPPING.get(team_ori, team_ori)
     # 转换为中文名称
@@ -536,3 +406,235 @@ def get_team_match(param):
         datas.append(tmp)
     datas.reverse()
     return datas
+
+
+def get_match(param):
+    teams = param.get("teams")
+    home_team_ori = teams[0]
+    away_team_ori = teams[1]
+    season = param.get("season")
+    home_team = CLUB_NAME_MAPPING.get(home_team_ori, home_team_ori)
+    away_team = CLUB_NAME_MAPPING.get(away_team_ori, away_team_ori)
+    # 转换为中文名称
+    CLUB_NAME_MAPPING_TRANSFER = dict(
+        zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
+    )
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    datas = list()
+    # 构造全赛季列表
+    all_seasons = nfs.create_season_list(season, 30)
+    # 历史比赛记录
+    match_datas_1 = nfs.get_team_match_goals_group_by(
+        hteam=home_team, ateam=away_team, seasons=all_seasons
+    )
+    match_datas_2 = nfs.get_team_match_goals_group_by(
+        hteam=away_team, ateam=home_team, seasons=all_seasons
+    )
+    # 统计进球数
+    for goal in range(0, 20):
+        d1 = 0
+        d2 = 0
+        total = 0
+        data = list()
+        for md1 in match_datas_1:
+            if md1[0] == goal:
+                d1 = md1[1]
+                break
+        for md2 in match_datas_2:
+            if md2[0] == goal:
+                d2 = md2[1]
+                break
+        total = d1 + d2
+        if total == 0:
+            continue
+        m = nfs.get_last_goal_match(home_team, away_team, goal)
+        data.append(goal)
+        data.append(total)
+        data.append(d1)
+        data.append(d2)
+        if m:
+            data.append(m.date_time.strftime("%Y/%m/%d %H:%M"))
+        else:
+            data.append("未出现过该进球数")
+        if m.fthg > m.ftag:
+            data.append("{}（主胜）".format(CLUB_NAME_MAPPING_TRANSFER.get(m.home_team)))
+        elif m.fthg < m.ftag:
+            data.append("{}（客胜）".format(CLUB_NAME_MAPPING_TRANSFER.get(m.away_team)))
+        else:
+            data.append("平局")
+        datas.append(data)
+    datas.sort(key=lambda x: x[1], reverse=True)
+    return datas
+
+
+def get_markdown(param):
+    def statics(team, matchs):
+        # 统计胜、平、负场次
+        win = 0
+        de = 0
+        lose = 0
+        # 统计总进球、总丢球、平均进球、平均丢球
+        goal_sum = 0
+        los_goal_sum = 0
+        for m in matchs:
+            # 主队
+            if m.home_team == team:
+                # 进球数
+                goal_sum += m.fthg
+                # 丢球数
+                los_goal_sum += m.ftag
+                # 赢
+                if m.fthg > m.ftag:
+                    win += 1
+                # 输
+                elif m.fthg < m.ftag:
+                    lose += 1
+                # 平
+                else:
+                    de += 1
+            # 客队
+            else:
+                # 进球数
+                goal_sum += m.ftag
+                # 丢球数
+                los_goal_sum += m.fthg
+                # 输
+                if m.fthg > m.ftag:
+                    lose += 1
+                # 赢
+                elif m.fthg < m.ftag:
+                    win += 1
+                # 平
+                else:
+                    de += 1
+        return [win, de, lose, goal_sum, los_goal_sum]
+
+    teams = param.get("teams")
+    home_team_ori = teams[0]
+    away_team_ori = teams[1]
+    home_team = CLUB_NAME_MAPPING.get(home_team_ori, home_team_ori)
+    away_team = CLUB_NAME_MAPPING.get(away_team_ori, away_team_ori)
+    # 转换为中文名称
+    CLUB_NAME_MAPPING_TRANSFER = dict(
+        zip(CLUB_NAME_MAPPING.values(), CLUB_NAME_MAPPING.keys())
+    )
+    # 转换为中文名称
+    LEAGUES_MAPPING_TRANSFER = dict(
+        zip(LEAGUES_MAPPING.values(), LEAGUES_MAPPING.keys())
+    )
+    nfs = NextbFootballSqliteDB()
+    nfs.create_session()
+    out_datas = list()
+    out_datas.append("# {} vs {} 比赛分析报告\n".format(home_team_ori, away_team_ori))
+    out_datas.append("## 一、{} vs {} 近10场比赛结果\n".format(home_team_ori, away_team_ori))
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
+    out_datas.append("|----|----|----|----|-----|")
+    matchs = nfs.get_last_matchs(
+        home_team=home_team, away_team=away_team, number=MAX_MATCHS_NUMBER
+    )
+    matchs.reverse()
+    for m in matchs[:10]:
+        out_datas.append(
+            "|{}|{}|{}|{}-{}|{}-{}|".format(
+                m.date_time.strftime("%Y/%m/%d"),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                m.hthg,
+                m.htag,
+                m.fthg,
+                m.ftag,
+            )
+        )
+    m_statics = statics(home_team, matchs[:10])
+    out_datas.append(
+        "\n{}对阵{}的{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            home_team_ori,
+            away_team_ori,
+            len(matchs[:10]),
+            LEAGUES_MAPPING_TRANSFER.get(matchs[0].div),
+            home_team_ori,
+            m_statics[0],
+            m_statics[1],
+            m_statics[2],
+            m_statics[3],
+            m_statics[4],
+        )
+    )
+    m_statics = statics(home_team, matchs)
+    out_datas.append(
+        "\n{}对阵{}的{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            home_team_ori,
+            away_team_ori,
+            len(matchs),
+            LEAGUES_MAPPING_TRANSFER.get(matchs[0].div),
+            home_team_ori,
+            m_statics[0],
+            m_statics[1],
+            m_statics[2],
+            m_statics[3],
+            m_statics[4],
+        )
+    )
+    out_datas.append("\n## 二、{} 近10场比赛结果\n".format(home_team_ori))
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
+    out_datas.append("|----|----|----|----|-----|")
+    h_matchs = nfs.get_team_last_matchs(team=home_team, number=10)
+    h_matchs.reverse()
+    for m in h_matchs:
+        out_datas.append(
+            "|{}|{}|{}|{}-{}|{}-{}|".format(
+                m.date_time.strftime("%Y/%m/%d"),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                m.hthg,
+                m.htag,
+                m.fthg,
+                m.ftag,
+            )
+        )
+    h_statics = statics(home_team, h_matchs)
+    out_datas.append(
+        "\n近{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            len(h_matchs),
+            LEAGUES_MAPPING_TRANSFER.get(h_matchs[0].div),
+            home_team_ori,
+            h_statics[0],
+            h_statics[1],
+            h_statics[2],
+            h_statics[3],
+            h_statics[4],
+        )
+    )
+    out_datas.append("\n## 三、{} 近10场比赛结果\n".format(away_team_ori))
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
+    out_datas.append("|----|----|----|----|-----|")
+    a_matchs = nfs.get_team_last_matchs(team=away_team, number=10)
+    a_matchs.reverse()
+    for m in a_matchs:
+        out_datas.append(
+            "|{}|{}|{}|{}-{}|{}-{}|".format(
+                m.date_time.strftime("%Y/%m/%d"),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                m.hthg,
+                m.htag,
+                m.fthg,
+                m.ftag,
+            )
+        )
+    a_statics = statics(away_team, a_matchs)
+    out_datas.append(
+        "\n近{}场{}比赛中，{}取得{}胜{}平{}负的成绩，共计{}个进球，{}个丢球".format(
+            len(a_matchs),
+            LEAGUES_MAPPING_TRANSFER.get(a_matchs[0].div),
+            away_team_ori,
+            a_statics[0],
+            a_statics[1],
+            a_statics[2],
+            a_statics[3],
+            a_statics[4],
+        )
+    )
+
+    return out_datas

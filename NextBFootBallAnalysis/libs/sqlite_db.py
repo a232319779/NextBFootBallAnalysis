@@ -7,7 +7,16 @@
 # @WeChat   : NextB
 
 import os
-from sqlalchemy import create_engine, Column, String, BigInteger, or_, and_, distinct
+from sqlalchemy import (
+    create_engine,
+    Column,
+    String,
+    BigInteger,
+    or_,
+    and_,
+    distinct,
+    func,
+)
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.sqltypes import DateTime, Integer
@@ -105,8 +114,10 @@ class NextbFootballSqliteDB:
         seasons = list()
         year = int(current_season.split("-")[0])
         for i in range(-number + 1, 0):
-            seasons.append("{}-{}".format(year + i, year + i + 1))
-        seasons.append(current_season)
+            # 数据最早只能到1993赛季
+            if year + i >= 1993:
+                seasons.append("{}-{}".format(year + i, year + i + 1))
+                seasons.append(current_season)
         return seasons
 
     def get_team_last_matchs(self, team, number=10):
@@ -129,6 +140,199 @@ class NextbFootballSqliteDB:
             for d in data:
                 datas.append(d)
             datas.reverse()
+            return datas
+        else:
+            return []
+
+    def get_div_goals_group_by(self, div, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.div == div,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
+            )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.div == div,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_team_goals_group_by(self, team, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
+                        or_(
+                            NextbFootballDatas.home_team == team,
+                            NextbFootballDatas.away_team == team,
+                        ),
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
+            )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        or_(
+                            NextbFootballDatas.home_team == team,
+                            NextbFootballDatas.away_team == team,
+                        ),
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_home_team_goals_group_by(self, team, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
+            )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_away_team_goals_group_by(self, team, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.away_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
+            )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.away_team == team,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []
+
+    def get_team_match_goals_group_by(self, hteam, ateam, seasons, st=1):
+        if st == 1:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.ftg, func.count(NextbFootballDatas.ftg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == hteam,
+                        NextbFootballDatas.away_team == ateam,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.ftg)
+                .all()
+            )
+        else:
+            data = (
+                self.session_maker.query(
+                    NextbFootballDatas.htg, func.count(NextbFootballDatas.htg)
+                )
+                .filter(
+                    and_(
+                        NextbFootballDatas.home_team == hteam,
+                        NextbFootballDatas.away_team == ateam,
+                        NextbFootballDatas.season.in_(seasons),
+                    )
+                )
+                .group_by(NextbFootballDatas.htg)
+                .all()
+            )
+        if len(data) > 0:
+            datas = list()
+            for d in data:
+                datas.append(d)
             return datas
         else:
             return []
@@ -158,6 +362,28 @@ class NextbFootballSqliteDB:
         else:
             return []
 
+    def get_last_goal_match(self, home_team, away_team, goal):
+        """
+        获取指定两支球队最近近N球的比赛的时间
+        """
+        teams = [home_team, away_team]
+        data = (
+            self.session_maker.query(NextbFootballDatas)
+            .filter(
+                and_(
+                    NextbFootballDatas.home_team.in_(teams),
+                    NextbFootballDatas.away_team.in_(teams),
+                    NextbFootballDatas.ftg == goal,
+                )
+            )
+            .order_by(NextbFootballDatas.id.desc())
+            .limit(1)
+        )
+        if data.count():
+            return data[0]
+        else:
+            return None
+
     def get_mergeteams_matchs(self, teams, number=10):
         """
         获取指定球队列表最近number场比赛的结果，默认最近10条
@@ -182,7 +408,7 @@ class NextbFootballSqliteDB:
         else:
             return []
 
-    def get_team_season_matchs(self, team, season):
+    def get_team_season_matchs(self, teams, season):
         """
         获取指定球队指定赛季的比赛的结果
         """
@@ -191,20 +417,19 @@ class NextbFootballSqliteDB:
             .filter(
                 and_(
                     or_(
-                        NextbFootballDatas.home_team == team,
-                        NextbFootballDatas.away_team == team,
+                        NextbFootballDatas.home_team.in_(teams),
+                        NextbFootballDatas.away_team.in_(teams),
                     ),
                     NextbFootballDatas.season.in_(season),
                 )
             )
-            .order_by(NextbFootballDatas.date_time.desc())
+            .order_by(NextbFootballDatas.date_time.asc())
             .all()
         )
         if len(data) > 0:
             datas = list()
             for d in data:
                 datas.append(d)
-            datas.reverse()
             return datas
         else:
             return []

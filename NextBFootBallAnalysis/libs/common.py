@@ -200,6 +200,105 @@ def parse_raw(data, has_time=False):
     return data_dict
 
 
+def parse_rank_raw(datas, season, has_time=False):
+    """
+    输出结果为列表，每个元素为字典，包含以下字段：
+    div: 联赛名称
+    season: 赛季
+    team: 球队名称
+    rank: 赛季排名
+    rounds: 比赛轮次
+    win: 胜利场次
+    draw: 平局场次
+    lose: 失利场次
+    goal: 进球数
+    lose_goal: 丢球数
+    goal_difference: 净胜球数
+    integral: 赛季积分
+    """
+    data_keys = [
+        "div",
+        "season",
+        "team",
+        "rank",
+        "rounds",
+        "win",
+        "draw",
+        "lose",
+        "goal",
+        "lose_goal",
+        "goal_difference",
+        "integral",
+    ]
+    data_dict = dict()
+    # 缺省值填充0
+    data_values = [0] * len(data_keys)
+    # 对应值偏移, 不包含time时, 偏移为0, 否则偏移需要加1
+    offset = 0
+    if has_time:
+        offset = 1
+    for data in datas:
+        # 按逗号分割字符串
+        tmp = data.split(",")
+        # 主队初始化
+        home_team = tmp[2 + offset]
+        if home_team not in data_dict.keys():
+            data_dict[home_team] = dict(zip(data_keys, data_values))
+            # 联赛名称
+            data_dict[home_team]["div"] = tmp[0]
+            data_dict[home_team]["season"] = season
+            data_dict[home_team]["team"] = home_team
+        # 客队初始化
+        away_team = tmp[3 + offset]
+        if away_team not in data_dict.keys():
+            data_dict[away_team] = dict(zip(data_keys, data_values))
+            # 联赛名称
+            data_dict[away_team]["div"] = tmp[0]
+            data_dict[away_team]["season"] = season
+            data_dict[away_team]["team"] = away_team
+        # 轮次
+        data_dict[home_team]["rounds"] += 1
+        data_dict[away_team]["rounds"] += 1
+        home_team_goal = int(tmp[4 + offset])
+        away_team_goal = int(tmp[5 + offset])
+        # 全场进球
+        data_dict[home_team]["goal"] += home_team_goal
+        data_dict[away_team]["goal"] += away_team_goal
+        # 全场丢球
+        data_dict[home_team]["lose_goal"] += away_team_goal
+        data_dict[away_team]["lose_goal"] += home_team_goal
+        # 净胜球
+        data_dict[home_team]["goal_difference"] += home_team_goal - away_team_goal
+        data_dict[away_team]["goal_difference"] += away_team_goal - home_team_goal
+        # 主队胜利
+        if home_team_goal > away_team_goal:
+            data_dict[home_team]["integral"] += 3
+            data_dict[home_team]["win"] += 1
+            data_dict[away_team]["lose"] += 1
+        # 客队胜利
+        elif home_team_goal < away_team_goal:
+            data_dict[away_team]["integral"] += 3
+            data_dict[away_team]["win"] += 1
+            data_dict[home_team]["lose"] += 1
+        # 平局
+        else:
+            data_dict[home_team]["integral"] += 1
+            data_dict[away_team]["integral"] += 1
+            data_dict[home_team]["draw"] += 1
+            data_dict[away_team]["draw"] += 1
+
+    # 排名
+    ranks = list(data_dict.values())
+    ranks.sort(
+        key=lambda x: (x.get("integral"), x.get("goal_difference")), reverse=True
+    )
+    i = 1
+    for r in ranks:
+        r["rank"] = i
+        i += 1
+    return ranks
+
+
 def parse_data(file_name, number=None):
     """
     解析指定文件格式
@@ -224,6 +323,29 @@ def parse_data(file_name, number=None):
         # 增加赛季
         data_dict["season"] = season
         out_datas.append(data_dict)
+
+    return out_datas
+
+
+def parse_rank_data(file_name):
+    """
+    解析指定文件格式
+    """
+    datas = read_datas(file_name)
+    has_time = False
+    # 后面的赛季加入了比赛时间,Time
+    if datas[0].startswith("Div,Date,Time,"):
+        has_time = True
+    # 删除header
+    del datas[0]
+    # 生成season
+    season_start = format_date(datas[0])
+    season_finish = season_start + relativedelta(years=1)
+    season = "{}-{}".format(season_start.year, season_finish.year)
+    # 解析比赛数据
+    out_datas = list()
+    data_dict = parse_rank_raw(datas, season, has_time)
+    out_datas.extend(data_dict)
 
     return out_datas
 

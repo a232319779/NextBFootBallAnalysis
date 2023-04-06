@@ -44,6 +44,24 @@ class NextbFootballDatas(Base):
     htr = Column(String(32))
 
 
+class NextbFootballRankDatas(Base):
+    __tablename__ = "nextb_football_rank"
+    # sqlite
+    id = Column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True)
+    div = Column(String(32))
+    season = Column(String(32))
+    team = Column(String(255))
+    rank = Column(Integer)
+    rounds = Column(Integer)
+    win = Column(Integer)
+    draw = Column(Integer)
+    lose = Column(Integer)
+    goal = Column(Integer)
+    lose_goal = Column(Integer)
+    goal_difference = Column(Integer)
+    integral = Column(Integer)
+
+
 class NextbFootballSqliteDB:
     def __init__(self):
         """
@@ -522,7 +540,7 @@ class NextbFootballSqliteDB:
 
     def add_datas(self, datas):
         """
-        插入聊天数据
+        插入比赛数据
         """
         for data in datas:
             new_data = NextbFootballDatas()
@@ -540,5 +558,27 @@ class NextbFootballSqliteDB:
             new_data.htag = data.get("htag")
             new_data.htg = data.get("htg")
             new_data.htr = data.get("htr")
+            self.session_maker.add(new_data)
+        self.session_maker.commit()
+
+    def add_rank_datas(self, datas):
+        """
+        插入积分榜数据
+        """
+        for data in datas:
+            new_data = NextbFootballRankDatas()
+            # 如果插入的数据有问题，则报错退出
+            new_data.div = data.get("div")
+            new_data.season = data.get("season")
+            new_data.team = data.get("team")
+            new_data.rank = data.get("rank")
+            new_data.rounds = data.get("rounds")
+            new_data.win = data.get("win")
+            new_data.draw = data.get("draw")
+            new_data.lose = data.get("lose")
+            new_data.goal = data.get("goal")
+            new_data.lose_goal = data.get("lose_goal")
+            new_data.goal_difference = data.get("goal_difference")
+            new_data.integral = data.get("integral")
             self.session_maker.add(new_data)
         self.session_maker.commit()

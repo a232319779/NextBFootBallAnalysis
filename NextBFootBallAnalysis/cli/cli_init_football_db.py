@@ -9,8 +9,9 @@
 
 import argparse
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
-from NextBFootBallAnalysis.libs.common import get_file_list, parse_data
+from NextBFootBallAnalysis.libs.common import get_file_list, parse_data, parse_rank_data
 from NextBFootBallAnalysis.libs.sqlite_db import NextbFootballSqliteDB
+
 
 def parse_cmd():
     """
@@ -35,6 +36,7 @@ def parse_cmd():
 
     return args
 
+
 def init_football_db(args):
     file_dir = args.csv_dir
     file_paths = get_file_list(file_dir)
@@ -42,11 +44,16 @@ def init_football_db(args):
     nfs = NextbFootballSqliteDB()
     nfs.create_session()
     nfs.create_table()
+    rank_datas = list()
     for file_name in file_paths:
         data = parse_data(file_name)
+        rank_data = parse_rank_data(file_name)
         if data:
             datas.extend(data)
+        if rank_data:
+            rank_datas.extend(rank_data)
     nfs.add_datas(datas)
+    nfs.add_rank_datas(rank_datas)
     nfs.close_session()
     nfs.close()
     print("初始化完成.数据库保存路径: {}".format(nfs.__db_name__))

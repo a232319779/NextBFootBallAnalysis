@@ -582,3 +582,20 @@ class NextbFootballSqliteDB:
             new_data.integral = data.get("integral")
             self.session_maker.add(new_data)
         self.session_maker.commit()
+
+    def get_team_season_rank(self, team, season):
+        """
+        获取指定球队指定赛季的排名表
+        """
+        data = (
+            self.session_maker.query(NextbFootballRankDatas.rank)
+            .filter(
+                and_(
+                    NextbFootballRankDatas.team == team,
+                    NextbFootballRankDatas.season == season,
+                )
+            )
+            .limit(1)
+        )
+
+        return data[0][0]

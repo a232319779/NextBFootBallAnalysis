@@ -76,6 +76,7 @@ def run():
         "球队{}球占比".format(args.goals),
         "主场{}球占比".format(args.goals),
         "客场{}球占比".format(args.goals),
+        "{}球未出现场次".format(args.goals),
         "{}".format(args.season),
         "占比方差",
     ]

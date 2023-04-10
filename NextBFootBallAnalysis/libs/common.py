@@ -19,6 +19,8 @@ from NextBFootBallAnalysis.libs.constant import (
     DEFAULT_MATCHS_NUMBER,
     LEAGUES_MAPPING,
     MAX_MATCHS_NUMBER,
+    STATICS_TYPE_HALF,
+    STATICS_TYPE_FULL,
 )
 
 
@@ -410,6 +412,18 @@ def get_recommend(param):
             ratio_list.append(ratio)
         return variance(ratio_list)
 
+    def calc_dist(g_datas, goal, st):
+        i = -1
+        for d in g_datas:
+            i += 1
+            if st == STATICS_TYPE_HALF:
+                if d.htg == goal:
+                    return i
+            elif st == STATICS_TYPE_FULL:
+                if d.ftg == goal:
+                    return i
+        return i
+
     goals = param.get("goals", 2)
     season = param.get("season", "2022-2023")
     statics_type = param.get("statics_type", 1)
@@ -486,6 +500,9 @@ def get_recommend(param):
                     team_season_goals_ratio = round(count / team_season_goals_sum, 3)
             # 计算方差
             t_variance = round(calc_variance(ct, all_seasons, statics_type), 4)
+            # 计算连续未进指定球数的场次
+            goals_data = nfs.get_team_goal_dist(ct, season, goals)
+            goal_dist = calc_dist(goals_data, goals, statics_type)
             team_datas = list()
             team_datas.append(name)
             team_datas.append(statics_type_str)
@@ -495,6 +512,7 @@ def get_recommend(param):
             team_datas.append(team_goals_ratio)
             team_datas.append(home_goals_ratio)
             team_datas.append(away_goals_ratio)
+            team_datas.append(goal_dist)
             team_datas.append(team_season_goals_ratio)
             team_datas.append(t_variance)
             datas[div].append(team_datas)
@@ -672,7 +690,7 @@ def get_markdown(param):
                 m.fthg,
                 m.ftag,
                 m.htg,
-                m.ftg
+                m.ftg,
             )
         )
     m_statics = statics(home_team, matchs[:10])
@@ -725,7 +743,7 @@ def get_markdown(param):
                 m.fthg,
                 m.ftag,
                 m.htg,
-                m.ftg
+                m.ftg,
             )
         )
     h_statics = statics(home_team, h_matchs)
@@ -761,7 +779,7 @@ def get_markdown(param):
                 m.fthg,
                 m.ftag,
                 m.htg,
-                m.ftg
+                m.ftg,
             )
         )
     a_statics = statics(away_team, a_matchs)

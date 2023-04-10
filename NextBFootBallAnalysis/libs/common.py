@@ -393,7 +393,7 @@ def get_last_matchs(param):
 def get_recommend(param):
     """
     推荐原理：
-    计算每支球队，每个赛季的进球占比，计算占比方差，选择占比最大，方差最小的前3支球队
+    计算每支球队，每个赛季的进球占比，计算占比方差，选择占比最大，方差最小的球队
     headers: 联赛名称,球队名称,联赛N球占比,比赛场次,球队N球占比,赛季占比,占比方差
     """
 
@@ -466,8 +466,8 @@ def get_recommend(param):
                     count = dg[1]
                     team_goals_ratio = round(count / team_goals_sum, 3)
             # 球队占比低于历史占比，则不要
-            if team_goals_ratio - div_goals_ratio <= 0:
-                continue
+            # if team_goals_ratio - div_goals_ratio <= 0:
+            #     continue
             # 计算主场进球占比
             home_goals = nfs.get_home_team_goals_group_by(
                 ct, all_seasons[-3:], statics_type
@@ -509,16 +509,16 @@ def get_recommend(param):
             team_datas.append(CLUB_NAME_MAPPING_TRANSFER.get(ct, ct))
             team_datas.append(div_goals_ratio)
             team_datas.append(team_goals_sum)
+            team_datas.append(goal_dist)
             team_datas.append(team_goals_ratio)
             team_datas.append(home_goals_ratio)
             team_datas.append(away_goals_ratio)
-            team_datas.append(goal_dist)
             team_datas.append(team_season_goals_ratio)
             team_datas.append(t_variance)
             datas[div].append(team_datas)
-        datas[div].sort(key=lambda x: x[-1])
+        datas[div].sort(key=lambda x: (x[-2], x[-1]))
         # 只要筛选出来的前3个
-        datas[div] = datas[div][:3]
+        datas[div] = datas[div]
     nfs.close_session()
     nfs.close()
     return datas

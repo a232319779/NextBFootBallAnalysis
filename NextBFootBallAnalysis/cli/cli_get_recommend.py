@@ -65,6 +65,9 @@ def run():
         "goals": args.goals,
         "statics_type": args.statics_type,
     }
+    print(
+        "说明：\n联赛N球占比：基于历史数据计算出的该联赛进N球的占比\n球队N球占比：基于历史数据计算出的该球队进N球的占比\n主场N球占比：基于近3个赛季该球队主场进N球的占比"
+    )
     datas = get_recommend(param)
     x = PrettyTable()
     x.field_names = [
@@ -73,11 +76,11 @@ def run():
         "球队名称",
         "联赛{}球占比".format(args.goals),
         "比赛场次",
+        "{}球未出现场次".format(args.goals),
         "球队{}球占比".format(args.goals),
         "主场{}球占比".format(args.goals),
         "客场{}球占比".format(args.goals),
-        "{}球未出现场次".format(args.goals),
-        "{}".format(args.season),
+        "本赛{}球占比".format(args.goals),
         "占比方差",
     ]
     for _, data in datas.items():

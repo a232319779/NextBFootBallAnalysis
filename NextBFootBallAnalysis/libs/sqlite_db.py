@@ -599,3 +599,28 @@ class NextbFootballSqliteDB:
         )
 
         return data[0][0]
+
+    def get_team_goal_dist(self, team, current_season, goal):
+        """
+        获取指定球队上一次进N个球的到当前时间的间隔场次
+        """
+        data = (
+            self.session_maker.query(NextbFootballDatas)
+            .filter(
+                and_(
+                    or_(
+                        NextbFootballDatas.home_team == team,
+                        NextbFootballDatas.away_team == team,
+                    ),
+                    NextbFootballDatas.season == current_season,
+                )
+            )
+            .order_by(NextbFootballDatas.id.desc())
+        )
+        if data.count():
+            datas = list()
+            for d in data:
+                datas.append(d)
+            return datas
+        else:
+            return []

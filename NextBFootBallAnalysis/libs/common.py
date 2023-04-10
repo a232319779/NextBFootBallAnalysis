@@ -649,23 +649,30 @@ def get_markdown(param):
     nfs.create_session()
     out_datas = list()
     out_datas.append("# {} vs {} 比赛分析报告\n".format(home_team_ori, away_team_ori))
+    out_datas.append("**注意**：小括号()中的数字为该球队的赛季排名。")
     out_datas.append("## 一、{} vs {} 近10场比赛结果\n".format(home_team_ori, away_team_ori))
-    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
-    out_datas.append("|----|----|----|----|-----|")
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|半场进球数|全场进球数|")
+    out_datas.append("|----|----|----|----|-----|-----|-----|")
     matchs = nfs.get_last_matchs(
         home_team=home_team, away_team=away_team, number=MAX_MATCHS_NUMBER
     )
     matchs.reverse()
     for m in matchs[:10]:
+        home_rank = nfs.get_team_season_rank(m.home_team, m.season)
+        away_rank = nfs.get_team_season_rank(m.away_team, m.season)
         out_datas.append(
-            "|{}|{}|{}|{}-{}|{}-{}|".format(
+            "|{}|{}({})|{}({})|{}-{}|{}-{}|{}|{}|".format(
                 m.date_time.strftime("%Y/%m/%d"),
                 CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                home_rank,
                 CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                away_rank,
                 m.hthg,
                 m.htag,
                 m.fthg,
                 m.ftag,
+                m.htg,
+                m.ftg
             )
         )
     m_statics = statics(home_team, matchs[:10])
@@ -699,20 +706,26 @@ def get_markdown(param):
         )
     )
     out_datas.append("\n## 二、{} 近10场比赛结果\n".format(home_team_ori))
-    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
-    out_datas.append("|----|----|----|----|-----|")
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|半场进球数|全场进球数|")
+    out_datas.append("|----|----|----|----|-----|-----|-----|")
     h_matchs = nfs.get_team_last_matchs(team=home_team, number=10)
     h_matchs.reverse()
     for m in h_matchs:
+        home_rank = nfs.get_team_season_rank(m.home_team, m.season)
+        away_rank = nfs.get_team_season_rank(m.away_team, m.season)
         out_datas.append(
-            "|{}|{}|{}|{}-{}|{}-{}|".format(
+            "|{}|{}({})|{}({})|{}-{}|{}-{}|{}|{}|".format(
                 m.date_time.strftime("%Y/%m/%d"),
                 CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                home_rank,
                 CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                away_rank,
                 m.hthg,
                 m.htag,
                 m.fthg,
                 m.ftag,
+                m.htg,
+                m.ftg
             )
         )
     h_statics = statics(home_team, h_matchs)
@@ -729,20 +742,26 @@ def get_markdown(param):
         )
     )
     out_datas.append("\n## 三、{} 近10场比赛结果\n".format(away_team_ori))
-    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|")
-    out_datas.append("|----|----|----|----|-----|")
+    out_datas.append("|比赛时间|主队|客队|半场比分|全场比分|半场进球数|全场进球数|")
+    out_datas.append("|----|----|----|----|-----|-----|-----|")
     a_matchs = nfs.get_team_last_matchs(team=away_team, number=10)
     a_matchs.reverse()
     for m in a_matchs:
+        home_rank = nfs.get_team_season_rank(m.home_team, m.season)
+        away_rank = nfs.get_team_season_rank(m.away_team, m.season)
         out_datas.append(
-            "|{}|{}|{}|{}-{}|{}-{}|".format(
+            "|{}|{}({})|{}({})|{}-{}|{}-{}|{}|{}|".format(
                 m.date_time.strftime("%Y/%m/%d"),
                 CLUB_NAME_MAPPING_TRANSFER.get(m.home_team, m.home_team),
+                home_rank,
                 CLUB_NAME_MAPPING_TRANSFER.get(m.away_team, m.away_team),
+                away_rank,
                 m.hthg,
                 m.htag,
                 m.fthg,
                 m.ftag,
+                m.htg,
+                m.ftg
             )
         )
     a_statics = statics(away_team, a_matchs)

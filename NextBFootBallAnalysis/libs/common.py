@@ -516,9 +516,12 @@ def get_recommend(param):
             team_datas.append(team_season_goals_ratio)
             team_datas.append(t_variance)
             datas[div].append(team_datas)
-        datas[div].sort(key=lambda x: (x[-2], x[-1]))
+        # 按赛季进球率和方差排序
+        # datas[div].sort(key=lambda x: (x[-2], x[-1]))
+        # 按球队名称排序，方便人工对比
+        datas[div].sort(key=lambda x: x[2])
         # 只要筛选出来的前3个
-        datas[div] = datas[div]
+        # datas[div] = datas[div][-3]
     nfs.close_session()
     nfs.close()
     return datas

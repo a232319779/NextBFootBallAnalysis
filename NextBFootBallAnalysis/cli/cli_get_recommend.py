@@ -7,6 +7,7 @@
 # @WeChat   : NextB
 
 
+import datetime
 import argparse
 from prettytable import PrettyTable
 from NextBFootBallAnalysis import NEXTB_FOOTBALL_VERSION
@@ -65,9 +66,7 @@ def run():
         "goals": args.goals,
         "statics_type": args.statics_type,
     }
-    print(
-        "说明：\n联赛N球占比：基于历史数据计算出的该联赛进N球的占比\n球队N球占比：基于历史数据计算出的该球队进N球的占比\n主场N球占比：基于近3个赛季该球队主场进N球的占比"
-    )
+
     datas = get_recommend(param)
     x = PrettyTable()
     x.field_names = [
@@ -85,4 +84,24 @@ def run():
     ]
     for _, data in datas.items():
         x.add_rows(data)
+    print(
+        "说明：\n联赛N球占比：基于历史数据计算出的该联赛进N球的占比\n球队N球占比：基于历史数据计算出的该球队进N球的占比\n主场N球占比：基于近3个赛季该球队主场进N球的占比"
+    )
     print(x)
+
+    # 将结果转为str，输出到csv文件
+    csv_data = list()
+    for _, data in datas.items():
+        for d in data:
+            csv_data.append("{},{},{},{},{},{},{},{},{},{},{}".format(*d))
+    # 保存推荐结果到csv文件，方便后续人工查看
+    st = "全场"
+    if args.statics_type == 0:
+        st = "半场"
+    csv_file_name = "五大联赛-{}-{}-{}球.csv".format(
+        datetime.datetime.now().strftime("%Y-%m-%d"), st, args.goals
+    )
+    with open(csv_file_name, "w", encoding="utf8") as f:
+        f.write(",".join(x.field_names))
+        f.write("\n")
+        f.write("\n".join(csv_data))
